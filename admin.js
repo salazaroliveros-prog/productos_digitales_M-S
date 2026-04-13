@@ -1,6 +1,12 @@
 const state = {
   session: null,
   historialRows: [],
+  historialView: {
+    sortKey: 'fecha',
+    sortDir: 'desc',
+    page: 1,
+    pageSize: 20,
+  },
   realtime: {
     enabled: true,
     intervalMs: 3000,
@@ -36,6 +42,10 @@ const el = {
   histHasta: document.getElementById('hist-hasta'),
   histEstado: document.getElementById('hist-estado'),
   histSearch: document.getElementById('hist-search'),
+  histPageSize: document.getElementById('hist-page-size'),
+  histPageLabel: document.getElementById('hist-page-label'),
+  histPagePrev: document.getElementById('hist-page-prev'),
+  histPageNext: document.getElementById('hist-page-next'),
   histFiltrar: document.getElementById('hist-filtrar'),
   histExport: document.getElementById('hist-export'),
   historialSummary: document.getElementById('historial-summary'),
@@ -420,6 +430,51 @@ function getFilteredHistorialRows() {
   });
 }
 
+function getSortValue(row = {}, key = 'fecha') {
+  if (key === 'fecha') {
+    return new Date(row.fecha || 0).getTime();
+  }
+  if (key === 'estado') {
+    return normalizeHistorialEstado(row);
+  }
+  return String(row[key] || '').toLowerCase();
+}
+
+function getSortedHistorialRows(rows = []) {
+  const { sortKey, sortDir } = state.historialView;
+  const factor = sortDir === 'asc' ? 1 : -1;
+
+  return [...rows].sort((a, b) => {
+    const left = getSortValue(a, sortKey);
+    const right = getSortValue(b, sortKey);
+    if (left === right) return 0;
+    return left > right ? factor : -factor;
+  });
+}
+
+function updateHistorialPager(totalRows) {
+  const pageSize = Number(state.historialView.pageSize || 20);
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  state.historialView.page = Math.min(Math.max(1, state.historialView.page), totalPages);
+
+  if (el.histPageLabel) {
+    el.histPageLabel.textContent = `Pagina ${state.historialView.page} de ${totalPages} · ${totalRows} registros`;
+  }
+  if (el.histPagePrev) {
+    el.histPagePrev.disabled = state.historialView.page <= 1;
+  }
+  if (el.histPageNext) {
+    el.histPageNext.disabled = state.historialView.page >= totalPages;
+  }
+
+  return { pageSize, totalPages };
+}
+
+function getHistorialSortLabel(key) {
+  if (state.historialView.sortKey !== key) return '';
+  return state.historialView.sortDir === 'asc' ? ' ▲' : ' ▼';
+}
+
 function renderHistorial(rows = []) {
   if (el.historialSummary) {
     const okCount = rows.filter((row) => normalizeHistorialEstado(row) === 'ok').length;
@@ -448,12 +503,17 @@ function renderHistorial(rows = []) {
   if (!el.historialTable) return;
 
   if (!rows.length) {
+    updateHistorialPager(0);
     el.historialTable.innerHTML = '<p>No hay registros para el filtro actual.</p>';
     return;
   }
 
-  const body = rows
-    .slice(0, 50)
+  const sortedRows = getSortedHistorialRows(rows);
+  const { pageSize } = updateHistorialPager(sortedRows.length);
+  const offset = (state.historialView.page - 1) * pageSize;
+  const pagedRows = sortedRows.slice(offset, offset + pageSize);
+
+  const body = pagedRows
     .map((row) => {
       const estado = normalizeHistorialEstado(row);
       return `
@@ -473,7 +533,15 @@ function renderHistorial(rows = []) {
   el.historialTable.innerHTML = `
     <table class="admin-table">
       <thead>
-        <tr><th>Fecha</th><th>Venta</th><th>Destino</th><th>Accion</th><th>Modo</th><th>Estado</th><th>Solicitado por</th></tr>
+        <tr>
+          <th><button type="button" class="table-sort ${state.historialView.sortKey === 'fecha' ? 'is-active' : ''}" data-sort-key="fecha">Fecha${getHistorialSortLabel('fecha')}</button></th>
+          <th><button type="button" class="table-sort ${state.historialView.sortKey === 'ventaId' ? 'is-active' : ''}" data-sort-key="ventaId">Venta${getHistorialSortLabel('ventaId')}</button></th>
+          <th><button type="button" class="table-sort ${state.historialView.sortKey === 'destino' ? 'is-active' : ''}" data-sort-key="destino">Destino${getHistorialSortLabel('destino')}</button></th>
+          <th><button type="button" class="table-sort ${state.historialView.sortKey === 'accion' ? 'is-active' : ''}" data-sort-key="accion">Accion${getHistorialSortLabel('accion')}</button></th>
+          <th><button type="button" class="table-sort ${state.historialView.sortKey === 'modoEnvio' ? 'is-active' : ''}" data-sort-key="modoEnvio">Modo${getHistorialSortLabel('modoEnvio')}</button></th>
+          <th><button type="button" class="table-sort ${state.historialView.sortKey === 'estado' ? 'is-active' : ''}" data-sort-key="estado">Estado${getHistorialSortLabel('estado')}</button></th>
+          <th><button type="button" class="table-sort ${state.historialView.sortKey === 'solicitadoPor' ? 'is-active' : ''}" data-sort-key="solicitadoPor">Solicitado por${getHistorialSortLabel('solicitadoPor')}</button></th>
+        </tr>
       </thead>
       <tbody>${body}</tbody>
     </table>
@@ -482,6 +550,10 @@ function renderHistorial(rows = []) {
 
 function refreshHistorialView() {
   renderHistorial(getFilteredHistorialRows());
+}
+
+function resetHistorialToFirstPage() {
+  state.historialView.page = 1;
 }
 
 function renderKpis(resumen = {}) {
@@ -759,6 +831,7 @@ async function loadHistorial() {
   const suffix = query.toString() ? `?${query.toString()}` : '';
   const historial = await adminRequest(`/api/integracion/appsheet/historial-credenciales${suffix}`);
   state.historialRows = Array.isArray(historial) ? historial : [];
+  resetHistorialToFirstPage();
   refreshHistorialView();
   el.historial.textContent = JSON.stringify(historial.slice(0, 30), null, 2);
 }
@@ -835,8 +908,43 @@ el.disenoForm.addEventListener('submit', async (event) => {
 
 el.refresh.addEventListener('click', loadMetricas);
 el.histFiltrar.addEventListener('click', loadHistorial);
-el.histEstado?.addEventListener('change', refreshHistorialView);
-el.histSearch?.addEventListener('input', refreshHistorialView);
+el.histEstado?.addEventListener('change', () => {
+  resetHistorialToFirstPage();
+  refreshHistorialView();
+});
+el.histSearch?.addEventListener('input', () => {
+  resetHistorialToFirstPage();
+  refreshHistorialView();
+});
+el.histPageSize?.addEventListener('change', () => {
+  state.historialView.pageSize = Number(el.histPageSize.value || 20);
+  resetHistorialToFirstPage();
+  refreshHistorialView();
+});
+el.histPagePrev?.addEventListener('click', () => {
+  state.historialView.page = Math.max(1, state.historialView.page - 1);
+  refreshHistorialView();
+});
+el.histPageNext?.addEventListener('click', () => {
+  state.historialView.page = state.historialView.page + 1;
+  refreshHistorialView();
+});
+el.historialTable?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-sort-key]');
+  if (!button) return;
+  const nextKey = String(button.getAttribute('data-sort-key') || '').trim();
+  if (!nextKey) return;
+
+  if (state.historialView.sortKey === nextKey) {
+    state.historialView.sortDir = state.historialView.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    state.historialView.sortKey = nextKey;
+    state.historialView.sortDir = nextKey === 'fecha' ? 'desc' : 'asc';
+  }
+
+  resetHistorialToFirstPage();
+  refreshHistorialView();
+});
 el.histExport.addEventListener('click', () => {
   const destino = String(el.histDestino.value || '').trim();
   const desde = String(el.histDesde.value || '').trim();

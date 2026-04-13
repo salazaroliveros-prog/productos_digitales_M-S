@@ -874,6 +874,33 @@ textarea {
   color: #4b5f72;
 }
 
+.table-sort {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.table-sort.is-active {
+  color: var(--primary);
+}
+
+.historial-pagination .field-compact {
+  min-width: 150px;
+  flex: 0 0 auto;
+}
+
+.historial-pagination .access-status {
+  margin: 0;
+  min-width: 220px;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

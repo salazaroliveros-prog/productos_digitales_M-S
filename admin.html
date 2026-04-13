@@ -116,6 +116,12 @@
         <button id="hist-export" type="button" class="btn">Exportar CSV</button>
       </div>
       <div id="historial-summary" class="dashboard-grid admin-gap-top"></div>
+      <div class="inline-form admin-gap-top historial-pagination">
+        <div class="field field-compact"><label for="hist-page-size">Filas por pagina</label><select id="hist-page-size"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option></select></div>
+        <p id="hist-page-label" class="access-status">Pagina 1 de 1</p>
+        <button id="hist-page-prev" type="button" class="btn ghost">Anterior</button>
+        <button id="hist-page-next" type="button" class="btn ghost">Siguiente</button>
+      </div>
       <div id="historial-table"></div>
       <pre id="admin-historial"></pre>
     </section>
