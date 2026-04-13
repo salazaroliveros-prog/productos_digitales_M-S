@@ -475,6 +475,34 @@ function getHistorialSortLabel(key) {
   return state.historialView.sortDir === 'asc' ? ' ▲' : ' ▼';
 }
 
+function csvCell(value) {
+  const text = String(value ?? '');
+  if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+  return text;
+}
+
+function buildHistorialCsv(rows = []) {
+  const header = ['fecha', 'ventaId', 'destino', 'accion', 'modoEnvio', 'estado', 'solicitadoPor'];
+  const lines = [header.join(',')];
+
+  rows.forEach((row) => {
+    const line = [
+      formatDateTime(row.fecha),
+      row.ventaId || '',
+      row.destino || '',
+      row.accion || '',
+      row.modoEnvio || '',
+      normalizeHistorialEstado(row),
+      row.solicitadoPor || '',
+    ].map(csvCell);
+    lines.push(line.join(','));
+  });
+
+  return lines.join('\n');
+}
+
 function renderHistorial(rows = []) {
   if (el.historialSummary) {
     const okCount = rows.filter((row) => normalizeHistorialEstado(row) === 'ok').length;
@@ -946,28 +974,20 @@ el.historialTable?.addEventListener('click', (event) => {
   refreshHistorialView();
 });
 el.histExport.addEventListener('click', () => {
-  const destino = String(el.histDestino.value || '').trim();
-  const desde = String(el.histDesde.value || '').trim();
-  const hasta = String(el.histHasta.value || '').trim();
-  const query = new URLSearchParams();
-  if (destino) query.set('destino', destino);
-  if (desde) query.set('desde', desde);
-  if (hasta) query.set('hasta', hasta);
-  const suffix = query.toString() ? `?${query.toString()}` : '';
-  const url = `/api/integracion/looker/historial-credenciales.csv${suffix}`;
-  fetch(url, { credentials: 'same-origin' })
-    .then((res) => res.text())
-    .then((csv) => {
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'historial-credenciales.csv';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      showToast('CSV exportado');
-    })
-    .catch((error) => showToast(error.message, true));
+  try {
+    const rows = getSortedHistorialRows(getFilteredHistorialRows());
+    const csv = buildHistorialCsv(rows);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'historial-credenciales-filtrado.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast(`CSV exportado (${rows.length} registros)`);
+  } catch (error) {
+    showToast(error.message, true);
+  }
 });
 
 el.paqForm.addEventListener('submit', async (event) => {
