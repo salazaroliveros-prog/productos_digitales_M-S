@@ -8,6 +8,7 @@ const el = {
   authForm: document.getElementById('admin-auth-form'),
   apiKey: document.getElementById('admin-api-key'),
   authStatus: document.getElementById('admin-auth-status'),
+  lockedNote: document.getElementById('admin-locked-note'),
   inventario: document.getElementById('admin-inventario'),
   disenoForm: document.getElementById('admin-diseno-form'),
   ventas: document.getElementById('admin-ventas'),
@@ -34,6 +35,8 @@ const el = {
   toast: document.getElementById('toast'),
 };
 
+const privateSections = Array.from(document.querySelectorAll('.admin-private'));
+
 function showToast(message, isError = false) {
   el.toast.textContent = message;
   el.toast.className = `toast ${isError ? 'error' : 'ok'}`;
@@ -41,6 +44,16 @@ function showToast(message, isError = false) {
   setTimeout(() => {
     el.toast.style.opacity = '0';
   }, 2600);
+}
+
+function setAdminLockState(isUnlocked) {
+  privateSections.forEach((section) => {
+    section.classList.toggle('hidden', !isUnlocked);
+  });
+
+  if (el.lockedNote) {
+    el.lockedNote.classList.toggle('hidden', isUnlocked);
+  }
 }
 
 async function adminRequest(url, options = {}) {
@@ -350,15 +363,18 @@ async function sendSmtpTest() {
 async function connectAdmin() {
   if (!state.apiKey) {
     el.authStatus.textContent = 'Falta API key';
+    setAdminLockState(false);
     return;
   }
   try {
     await adminRequest('/api/integracion/appsheet/schema');
     el.authStatus.textContent = 'Conectado';
+    setAdminLockState(true);
     await Promise.all([loadInventario(), loadVentas(), loadMetricas(), loadHistorial(), loadPaquetes(), loadSmtpStatus()]);
     showToast('Back-office conectado');
   } catch (error) {
     el.authStatus.textContent = 'Error de autenticacion';
+    setAdminLockState(false);
     showToast(error.message, true);
   }
 }
@@ -455,6 +471,7 @@ el.smtpTestBtn.addEventListener('click', async () => {
 });
 
 (function bootstrap() {
+  setAdminLockState(false);
   el.apiKey.value = state.apiKey;
   if (state.apiKey) {
     connectAdmin();

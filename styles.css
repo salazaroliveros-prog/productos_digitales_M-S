@@ -97,6 +97,10 @@ body {
   font-weight: 700;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));

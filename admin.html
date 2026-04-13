@@ -29,12 +29,17 @@
       </div>
     </section>
 
-    <section class="section">
+    <section id="admin-locked-note" class="section">
+      <h2>Modulo protegido</h2>
+      <p>Este panel solo carga informacion interna cuando la x-api-key administrativa es valida.</p>
+    </section>
+
+    <section class="section admin-private hidden">
       <h2>Inventario (precios)</h2>
       <div id="admin-inventario"></div>
     </section>
 
-    <section class="section">
+    <section class="section admin-private hidden">
       <h2>Carga de diseno Base64</h2>
       <form id="admin-diseno-form" class="form-card">
         <div class="field"><label for="d-id">ID</label><input id="d-id" name="id" placeholder="DIS-010" /></div>
@@ -46,12 +51,12 @@
       </form>
     </section>
 
-    <section class="section">
+    <section class="section admin-private hidden">
       <h2>Ventas y soporte</h2>
       <div id="admin-ventas"></div>
     </section>
 
-    <section class="section">
+    <section class="section admin-private hidden">
       <h2>Metricas y actividad</h2>
       <div class="inline-form">
         <div class="field"><label for="met-desde">Desde</label><input id="met-desde" type="date" /></div>
@@ -63,7 +68,7 @@
       <div id="admin-consultas"></div>
     </section>
 
-    <section class="section">
+    <section class="section admin-private hidden">
       <h2>Paquetes comerciales</h2>
       <form id="paq-form" class="form-card">
         <div class="field"><label for="paq-id">ID</label><input id="paq-id" name="id" placeholder="PAQ-VENTA" /></div>
@@ -81,7 +86,7 @@
       <div id="paq-listado"></div>
     </section>
 
-    <section class="section">
+    <section class="section admin-private hidden">
       <h2>SMTP y notificaciones</h2>
       <div class="inline-form">
         <button id="smtp-status-btn" type="button" class="btn ghost">Estado SMTP</button>
@@ -91,7 +96,7 @@
       <pre id="smtp-status"></pre>
     </section>
 
-    <section class="section">
+    <section class="section admin-private hidden">
       <h2>Historial de credenciales</h2>
       <div class="inline-form">
         <div class="field"><label for="hist-destino">Destino (email)</label><input id="hist-destino" /></div>
