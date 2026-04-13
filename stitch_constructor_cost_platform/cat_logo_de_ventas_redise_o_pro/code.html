@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARCHITECTURA | Construcción de Precisión</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#fea520",
+                      "tertiary": "#021526",
+                      "primary-fixed-dim": "#b7c8dd",
+                      "outline-variant": "#c4c6cc",
+                      "secondary": "#865300",
+                      "surface-container-low": "#f3f4f5",
+                      "on-surface": "#191c1d",
+                      "primary-container": "#1a2a3a",
+                      "inverse-surface": "#2e3132",
+                      "tertiary-container": "#182a3b",
+                      "on-tertiary-fixed": "#091d2e",
+                      "on-tertiary": "#ffffff",
+                      "surface-dim": "#d9dadb",
+                      "primary": "#041525",
+                      "on-tertiary-container": "#7f91a6",
+                      "outline": "#74777d",
+                      "surface-variant": "#e1e3e4",
+                      "surface-container-high": "#e7e8e9",
+                      "on-primary-fixed": "#0c1d2c",
+                      "tertiary-fixed": "#d1e4fb",
+                      "surface-container-highest": "#e1e3e4",
+                      "inverse-primary": "#b7c8dd",
+                      "error": "#ba1a1a",
+                      "on-surface-variant": "#44474c",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "on-background": "#191c1d",
+                      "surface": "#f8f9fa",
+                      "secondary-fixed-dim": "#ffb961",
+                      "on-primary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "background": "#f8f9fa",
+                      "surface-tint": "#506072",
+                      "on-secondary-container": "#694000",
+                      "surface-bright": "#f8f9fa",
+                      "secondary-fixed": "#ffddb9",
+                      "surface-container": "#edeeef",
+                      "on-primary-fixed-variant": "#384859",
+                      "primary-fixed": "#d3e4fa",
+                      "on-tertiary-fixed-variant": "#36485b",
+                      "on-secondary-fixed": "#2b1700",
+                      "on-primary-container": "#8191a5",
+                      "on-error-container": "#93000a",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed-variant": "#663e00",
+                      "tertiary-fixed-dim": "#b5c8df"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          }
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .surgical-gradient {
+            background: linear-gradient(135deg, #041525 0%, #1a2a3a 100%);
+        }
+      </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-slate-200/15 backdrop-blur-md flex justify-between items-center px-8 py-4 max-w-full mx-auto">
+<div class="text-xl font-bold tracking-tighter text-slate-900 font-headline uppercase">ARCHITECTURA</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-slate-900 border-b-2 border-orange-600 pb-1 font-headline text-sm font-medium tracking-tight" href="#">Designs</a>
+<a class="text-slate-500 hover:text-slate-900 transition-colors duration-200 font-headline text-sm font-medium tracking-tight" href="#">Specs</a>
+<a class="text-slate-500 hover:text-slate-900 transition-colors duration-200 font-headline text-sm font-medium tracking-tight" href="#">Pricing</a>
+<a class="text-slate-500 hover:text-slate-900 transition-colors duration-200 font-headline text-sm font-medium tracking-tight" href="#">Contractors</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-900 p-2 hover:bg-slate-100 transition-all rounded-sm" data-icon="shopping_cart">shopping_cart</button>
+<button class="bg-primary text-on-primary px-5 py-2 rounded-lg text-sm font-semibold tracking-tight hover:opacity-90 active:scale-95 transition-all">Request Quote</button>
+</div>
+</nav>
+<main class="pt-24 min-h-screen">
+<!-- Hero Section -->
+<section class="relative px-8 py-20 lg:py-32 overflow-hidden bg-surface">
+<div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+<div class="z-10">
+<span class="inline-block py-1 px-3 mb-6 rounded-sm bg-secondary-container/20 text-secondary font-label text-[10px] font-bold tracking-[0.1em] uppercase">The Blueprint Authority</span>
+<h1 class="font-headline text-5xl lg:text-7xl font-extrabold text-primary leading-[1.1] tracking-tight mb-8">
+                        Precisión Arquitectónica <br/><span class="text-secondary">a su Alcance</span>
+</h1>
+<p class="text-lg text-on-surface-variant max-w-xl mb-10 leading-relaxed">
+                        Acceda a planos profesionales de alta ingeniería con cálculo de presupuesto en tiempo real. Transformamos visiones estructurales en realidades técnicas con precisión milimétrica.
+                    </p>
+<div class="flex flex-wrap gap-4">
+<button class="surgical-gradient text-on-primary px-8 py-4 rounded-lg font-bold text-sm tracking-wide shadow-xl shadow-primary/10 flex items-center gap-2">
+                            Explorar Catálogo
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<button class="border-b-2 border-secondary-container py-3 px-2 font-bold text-sm text-primary hover:bg-surface-container-low transition-all">
+                            Ver Especificaciones Técnicas
+                        </button>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -inset-4 bg-secondary-container/5 rounded-3xl blur-3xl group-hover:bg-secondary-container/10 transition-all duration-500"></div>
+<div class="relative bg-surface-container-highest rounded-xl overflow-hidden aspect-[4/3] shadow-2xl">
+<img alt="Architectural Plan" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" data-alt="Technical architectural blueprint showing detailed structural floor plans with precise measurements and engineering annotations on clean white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrLzW1kHdHQeeMlhzSTqGdwac43Yg4MmkNXELQWH1gRdzzrLgpHdTG8j3IR8IwKHKSy4fZZx-l3isoDJyK2yycAZneTmf2kBHhERpAVfbJHDR_4odPeeYutgPuUK5HGQLw7ZuJ_PgkdrRFZRvrzqrVVwdZUtbEMZJ9e-Nu8cSUh7o0ppLJejW1lDjlZJJVAlELR8Rit2yDBwEb3ZaWvtvD4p0Ifh1SFGiHoTUBjMtgs_XvGG-dcgzyCEHIGSJcUOFA-M3HctP2Jj3s"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
+</div>
+<div class="absolute -bottom-6 -left-6 glass-panel p-6 shadow-xl border border-outline-variant/10 max-w-xs">
+<div class="text-secondary font-label text-[10px] font-bold tracking-widest mb-2 uppercase">Current Project</div>
+<div class="text-primary font-bold font-headline text-lg mb-1">Sala de Billar Urbano</div>
+<div class="flex items-center gap-2 text-on-surface-variant text-xs">
+<span class="material-symbols-outlined text-sm">architecture</span>
+<span>Scale 1:50 | Technical Spec v2.4</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="max-w-[1600px] mx-auto px-8 flex flex-col lg:flex-row gap-8 pb-20">
+<!-- SideNavBar as Filter/Configurator -->
+<aside class="hidden lg:flex flex-col gap-4 p-6 h-fit w-64 bg-slate-50 border-r border-slate-200/20 sticky top-24">
+<div class="mb-6">
+<h3 class="font-headline text-sm font-bold text-primary tracking-tight">Catalog Filters</h3>
+<p class="text-[10px] text-on-surface-variant font-label uppercase tracking-widest mt-1">Technical Specifications</p>
+</div>
+<div class="space-y-2">
+<button class="w-full flex items-center gap-3 p-3 bg-slate-900 text-white rounded-sm transition-all duration-150">
+<span class="material-symbols-outlined text-[20px]">home</span>
+<span class="font-label text-xs font-semibold uppercase tracking-widest">Residential</span>
+</button>
+<button class="w-full flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-200/50 transition-all duration-150">
+<span class="material-symbols-outlined text-[20px]">business</span>
+<span class="font-label text-xs font-semibold uppercase tracking-widest">Commercial</span>
+</button>
+<button class="w-full flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-200/50 transition-all duration-150">
+<span class="material-symbols-outlined text-[20px]">factory</span>
+<span class="font-label text-xs font-semibold uppercase tracking-widest">Industrial</span>
+</button>
+<button class="w-full flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-200/50 transition-all duration-150">
+<span class="material-symbols-outlined text-[20px]">build</span>
+<span class="font-label text-xs font-semibold uppercase tracking-widest">Renovation</span>
+</button>
+<button class="w-full flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-200/50 transition-all duration-150">
+<span class="material-symbols-outlined text-[20px]">architecture</span>
+<span class="font-label text-xs font-semibold uppercase tracking-widest">Custom</span>
+</button>
+</div>
+<div class="mt-8 p-4 bg-primary-container rounded-lg border border-primary">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-secondary-container text-lg">calculate</span>
+<h4 class="text-white text-xs font-bold uppercase tracking-wider">Calculadora</h4>
+</div>
+<p class="text-on-primary-container text-[10px] leading-relaxed mb-4">
+                        Actualice los parámetros de material para recalcular presupuestos dinámicos.
+                    </p>
+<div class="space-y-3">
+<div>
+<label class="text-[9px] text-on-primary-container uppercase font-bold tracking-tighter">Región de Costos</label>
+<select class="w-full mt-1 bg-tertiary-container border-none text-white text-xs rounded-sm focus:ring-1 focus:ring-secondary">
+<option>Guatemala Centro</option>
+<option>Occidente</option>
+</select>
+</div>
+<button class="w-full py-2 bg-secondary text-on-primary text-[10px] font-bold uppercase rounded-sm">Recalcular Global</button>
+</div>
+</div>
+</aside>
+<!-- Main Content: Catalog -->
+<div class="flex-1">
+<div class="mb-12 flex justify-between items-end border-b border-outline-variant/10 pb-6">
+<div>
+<h2 class="font-headline text-3xl font-bold text-primary">Diseños Disponibles</h2>
+<p class="text-on-surface-variant mt-2 text-sm">Seleccione un modelo para ver el desglose técnico y presupuestario.</p>
+</div>
+<div class="flex gap-4">
+<button class="p-2 border border-outline-variant/30 rounded-sm hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">grid_view</span>
+</button>
+<button class="p-2 border border-outline-variant/30 rounded-sm hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">list</span>
+</button>
+</div>
+</div>
+<!-- Product Grid -->
+<div class="grid md:grid-cols-2 gap-8">
+<!-- Product Card 1 -->
+<div class="bg-surface-container-lowest group overflow-hidden border border-transparent hover:border-outline-variant/20 transition-all duration-300">
+<div class="relative aspect-[16/9] overflow-hidden bg-surface-container">
+<img alt="Sala de Billar Urbano" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Modern minimalist recreational room interior with professional billiards table, sleek dark walls, and precision overhead lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDug5T_9cN8a_5qdH_QDvLrOyCoJJq_sYo_RrnCODovncboJjoi6wkMmfmrKYRMqeyUoforJyTPjZoIB4fw403b6HQx8usk0VHV793kS-5uTmlPeKqiRlCr_Y9ZSBeqiLoxCukUhxvaBVW2uhqXK8bjGq-oO1hNcrWS0eJkUmuw1jOuVxkZo5qYozEvWhTHkCEG_HOrlHUbJiE8aP4vVAT6m8oGMZlZtO_qcEYYK0yhkOIRbRGenAAp7R52NAWZarWue1FGYN783ESB"/>
+<div class="absolute top-4 left-4 bg-primary text-white text-[10px] font-bold px-2 py-1 tracking-widest uppercase">Modelo: WM-04</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-headline text-xl font-bold text-primary group-hover:text-secondary transition-colors">Sala de Billar Urbano</h3>
+<div class="text-right">
+<div class="text-secondary font-bold text-sm">76.5 m²</div>
+<div class="text-on-surface-variant text-[10px] uppercase font-medium">Área Construcción</div>
+</div>
+</div>
+<div class="flex items-center gap-6 mb-8 text-on-surface-variant text-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">straighten</span>
+<span>4.25m x 18m</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">layers</span>
+<span>1 Nivel</span>
+</div>
+</div>
+<!-- Technical Price List -->
+<div class="space-y-1 mb-8">
+<div class="flex justify-between p-3 bg-surface-container-low">
+<span class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Precio Materiales</span>
+<span class="font-headline font-bold text-primary">Q0.00</span>
+</div>
+<div class="flex justify-between p-3 bg-white">
+<span class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Mano de Obra</span>
+<span class="font-headline font-bold text-primary">Q0.00</span>
+</div>
+<div class="flex justify-between p-3 bg-surface-container-low border-t-2 border-secondary-container/20">
+<span class="text-xs font-bold text-primary uppercase tracking-wider">Presupuesto Estimado</span>
+<span class="font-headline font-extrabold text-secondary">Pendiente</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 surgical-gradient text-on-primary py-3 font-bold text-xs uppercase tracking-widest rounded-sm hover:opacity-90 transition-all">Comprar Planos</button>
+<button class="flex-1 border border-primary text-primary py-3 font-bold text-xs uppercase tracking-widest rounded-sm hover:bg-surface-container transition-all">Ver Detalles</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="bg-surface-container-lowest group overflow-hidden border border-transparent hover:border-outline-variant/20 transition-all duration-300">
+<div class="relative aspect-[16/9] overflow-hidden bg-surface-container">
+<img alt="Diseño Colonial" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Luxurious colonial style villa exterior with terracotta tiles, white arched corridors, and lush tropical landscaped garden" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5CEaX5w2dBLfCIY0V3RmM7Ow1_IAedFid-Ztkdiy1pUD0H8sjdRbE1JLMgG7WZuH6AkZC28Ynv8VX1bnFkAe6N2UFelptV_hu_rHGC1YJmt8bYitoxYCvphSBk9hvMg74kVyCri1n5El2c21aSHORGXuquBCwh_gOCHLGoJAl6j-qBHxNFY1_RPgWu3oOk2nty9uA3xgNKd46dufRvEpOF5qtC6nbmYpk13R46PvDb0QlzEWHh-QJqMbcICXknNMd17X_n5NTcEMW"/>
+<div class="absolute top-4 left-4 bg-primary text-white text-[10px] font-bold px-2 py-1 tracking-widest uppercase">Modelo: MS-12</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-headline text-xl font-bold text-primary group-hover:text-secondary transition-colors">Diseño Colonial</h3>
+<div class="text-right">
+<div class="text-secondary font-bold text-sm">120 m²</div>
+<div class="text-on-surface-variant text-[10px] uppercase font-medium">Área Construcción</div>
+</div>
+</div>
+<div class="flex items-center gap-6 mb-8 text-on-surface-variant text-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">straighten</span>
+<span>Variable s/ Terreno</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">layers</span>
+<span>2 Niveles</span>
+</div>
+</div>
+<!-- Technical Price List -->
+<div class="space-y-1 mb-8">
+<div class="flex justify-between p-3 bg-surface-container-low">
+<span class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Precio Materiales</span>
+<span class="font-headline font-bold text-primary">Q0.00</span>
+</div>
+<div class="flex justify-between p-3 bg-white">
+<span class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Mano de Obra</span>
+<span class="font-headline font-bold text-primary">Q0.00</span>
+</div>
+<div class="flex justify-between p-3 bg-surface-container-low border-t-2 border-secondary-container/20">
+<span class="text-xs font-bold text-primary uppercase tracking-wider">Presupuesto Estimado</span>
+<span class="font-headline font-extrabold text-secondary">Pendiente</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 surgical-gradient text-on-primary py-3 font-bold text-xs uppercase tracking-widest rounded-sm hover:opacity-90 transition-all">Comprar Planos</button>
+<button class="flex-1 border border-primary text-primary py-3 font-bold text-xs uppercase tracking-widest rounded-sm hover:bg-surface-container transition-all">Ver Detalles</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Technical Note -->
+<div class="mt-12 p-8 bg-surface-container border-l-4 border-secondary-container flex items-start gap-6">
+<span class="material-symbols-outlined text-secondary text-3xl">info</span>
+<div>
+<h4 class="font-headline font-bold text-primary text-lg">Nota Técnica de Presupuesto</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed mt-2 max-w-2xl">
+                            Los precios de materiales y mano de obra marcados como Q0.00 son calculados dinámicamente según la ubicación del proyecto, disponibilidad de materiales en tiempo real y especificaciones estructurales finales. Regístrese o contacte a un asesor para generar su presupuesto certificado.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-slate-200/10 bg-slate-100 flex flex-col md:flex-row justify-between items-center px-12 py-12 w-full">
+<div class="mb-8 md:mb-0">
+<div class="text-lg font-black tracking-tighter text-slate-900 font-headline uppercase mb-2">ARCHITECTURA</div>
+<p class="text-slate-500 text-xs max-w-xs font-body leading-relaxed">
+                © 2024 Architectural Precision Systems. All rights reserved. Built to 1:1 Scale.
+            </p>
+</div>
+<div class="flex flex-wrap justify-center gap-8 md:gap-12">
+<div class="flex flex-col gap-3">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Legal</span>
+<a class="text-slate-500 hover:underline text-sm" href="#">Terms of Service</a>
+<a class="text-slate-500 hover:underline text-sm" href="#">Privacy Policy</a>
+</div>
+<div class="flex flex-col gap-3">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Resources</span>
+<a class="text-slate-500 hover:underline text-sm" href="#">Licensing</a>
+<a class="text-slate-500 hover:underline text-sm" href="#">Support</a>
+<a class="text-slate-500 hover:underline text-sm" href="#">API Docs</a>
+</div>
+<div class="flex flex-col gap-3">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Social</span>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-orange-600">public</span>
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-orange-600">share</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

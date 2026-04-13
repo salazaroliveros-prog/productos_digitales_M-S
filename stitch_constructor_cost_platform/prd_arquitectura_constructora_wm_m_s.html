@@ -1,0 +1,24 @@
+# Documentación Técnica: CONSTRUCTORA WM/M&S
+
+## Metodología: Backend-First
+Enfoque en la lógica de negocio y escalabilidad antes de la interfaz final.
+
+## Estructura de Base de Datos (MongoDB)
+### A. Materiales_Precios
+- Almacena costos de materia prima y mano de obra por separado.
+- Región: Jutiapa.
+
+### B. Catalogo_Disenos
+- Datos técnicos de planos (Sala de Billar, Colonial, etc.).
+- Incluye dimensiones, área y rendimientos de insumos.
+
+### C. Ventas_Usuarios
+- Control de compras y acceso a aplicaciones.
+
+## Lógica de Cálculo
+Función `calcularPresupuesto` que multiplica m2 por rendimientos y costos unitarios en tiempo real.
+
+## Stack Frontend
+- HTML5/CSS3 limpio.
+- Uso de imágenes en Base64 para carga instantánea.
+- Integración con MongoDB Stitch SDK.

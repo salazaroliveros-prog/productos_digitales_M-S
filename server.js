@@ -445,6 +445,10 @@ function parseBoolean(value, fallback = false) {
 }
 
 function normalizeDateOnly(value) {
+  // Reject empty strings, null, undefined, and non-string values that aren't Date objects
+  if (!value || (typeof value === 'string' && value.trim() === '')) {
+    return null;
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return null;
@@ -959,8 +963,9 @@ async function getMetricasNegocio(query = null) {
   const materiales = await readCollection('materiales', []);
   const consultas = await readCollection('consultas', []);
   const notificaciones = await readCollection('notificaciones', []);
-  const desde = query ? normalizeDateOnly(query.get('desde')) : null;
-  const hasta = query ? normalizeDateOnly(query.get('hasta')) : null;
+  // Safely extract date parameters, handling null/undefined/empty strings
+  const desde = query && query.get('desde') ? normalizeDateOnly(query.get('desde')) : null;
+  const hasta = query && query.get('hasta') ? normalizeDateOnly(query.get('hasta')) : null;
 
   const disenosMap = disenos.reduce((acc, diseno) => {
     acc[diseno.id] = diseno;
