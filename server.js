@@ -159,11 +159,37 @@ async function ensureMongoConnection() {
   mongoDb = mongoClient.db(MONGO_DB_NAME);
 }
 
+async function recoverMongoRuntime() {
+  if (runtimeProvider === 'mongo' || !MONGO_URI) {
+    return false;
+  }
+
+  try {
+    if (!mongoDb) {
+      mongoClient = new MongoClient(MONGO_URI);
+      await mongoClient.connect();
+      mongoDb = mongoClient.db(MONGO_DB_NAME);
+    }
+    runtimeProvider = 'mongo';
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
 async function readCollection(collectionName, fallback = []) {
   if (runtimeProvider === 'mongo') {
     await ensureMongoConnection();
     const docs = await mongoDb.collection(collectionName).find({}).toArray();
     return docs.map(sanitizeMongoDoc);
+  }
+
+  if (process.env.VERCEL) {
+    const recovered = await recoverMongoRuntime();
+    if (recovered) {
+      const docs = await mongoDb.collection(collectionName).find({}).toArray();
+      return docs.map(sanitizeMongoDoc);
+    }
   }
 
   return readJsonFile(filePathForCollection(collectionName), fallback);
@@ -179,6 +205,21 @@ async function writeCollection(collectionName, data) {
       await collection.insertMany(payload);
     }
     return;
+  }
+
+  if (process.env.VERCEL) {
+    const recovered = await recoverMongoRuntime();
+    if (recovered) {
+      const payload = Array.isArray(data) ? data.map(sanitizeMongoDoc) : [];
+      const collection = mongoDb.collection(collectionName);
+      await collection.deleteMany({});
+      if (payload.length > 0) {
+        await collection.insertMany(payload);
+      }
+      return;
+    }
+
+    throw new ApiError(503, 'Persistencia no disponible temporalmente. Intenta de nuevo.');
   }
 
   writeJsonFile(filePathForCollection(collectionName), data);
