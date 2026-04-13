@@ -1,55 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WM/M&S - Construyendo el Futuro</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        :root { --wm-navy: #1a2a3a; --wm-orange: #f39c12; }
-        .hero-card { border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .btn-wm { background-color: var(--wm-orange); color: white; font-weight: bold; border-radius: 25px; }
-        .price-tag { color: var(--wm-navy); font-size: 1.5rem; font-weight: 800; }
-        .title-navy { color: var(--wm-navy); }
-        #m2Slider { accent-color: var(--wm-orange); background: #e2e8f0; border-radius: 6px; height: 8px; cursor: pointer; }
-        .slider-wrapper { background: #1a2a3a14; border-radius: 10px; padding: 0.6rem 0.75rem; }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inicio | CONSTRUCTORA WM/M&S</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
 </head>
-<body class="bg-light" data-screen="vitrina-bootstrap">
-
-<div class="container py-4">
-    <h2 class="text-center mb-4 title-navy">CATALOGO DE DISENOS WM/M&S</h2>
-
-    <div class="card hero-card mb-4">
-        <img id="heroImage" src="https://placehold.co/1200x600/e9eef5/1a2a3a?text=Diseno+Colonial" class="card-img-top" alt="Diseno Colonial">
-        <div class="card-body">
-            <h5 class="card-title" id="heroTitle">Casa Colonial Jutiapa (120m2)</h5>
-            <p class="text-muted small" id="heroDesc">Optimizado para clima calido y acabados artesanales.</p>
-            <hr>
-
-            <label class="form-label">Ajustar area: <b id="areaLabel">120</b> m2</label>
-            <div class="slider-wrapper">
-              <input type="range" class="form-range" id="m2Slider" min="50" max="400" value="120" step="10" title="Ajustar area de construccion">
+<body class="public-body">
+    <header class="public-topbar">
+        <div class="container topbar-inner">
+            <div class="topbar-brand">
+                <span class="eyebrow">General</span>
+                <h1>CONSTRUCTORA WM/M&S</h1>
             </div>
-
-            <div class="row mt-3 text-center">
-                <div class="col-6 border-end">
-                    <p class="mb-0 small text-uppercase">Materiales</p>
-                    <p class="price-tag" id="costoMat">Q 102,060</p>
-                </div>
-                <div class="col-6">
-                    <p class="mb-0 small text-uppercase">Mano de Obra</p>
-                    <p class="price-tag" id="costoMO">Q 54,000</p>
-                </div>
-            </div>
-
-            <p id="preciosFuente" class="text-muted small mt-2 mb-0">Tarifas base por m2: Materiales Q 850.50 | Mano de obra Q 450.00</p>
-
-            <button id="btnConstruirFuturo" class="btn btn-wm w-100 mt-3 py-3" type="button">CONSTRUIR MI FUTURO</button>
+            <nav class="topbar-nav">
+                <a href="./index.html" class="is-current">Inicio</a>
+                <a href="./catalogo.html">Catalogo</a>
+                <a href="./appsheet.html">AppSheet</a>
+                <a href="./login.html#acceso-aprobado">Acceso cliente</a>
+                <a href="./contacto.html">Contacto</a>
+            </nav>
         </div>
-    </div>
-</div>
+    </header>
 
-<script src="./app.js"></script>
+    <main class="public-main">
+        <section class="public-hero">
+            <div class="container hero-layout">
+                <div class="hero-copy">
+                    <span class="hero-badge">The Blueprint Authority</span>
+                    <h2>Precision Arquitectonica para proyectos reales</h2>
+                    <p>
+                        Esta es la portada general tipo vitrina. Aqui presentamos el valor de CONSTRUCTORA WM/M&S y guiamos al cliente hacia el
+                        modulo de catalogo, donde luego selecciona modelo, ajusta area y calcula costos.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="btn primary" href="./catalogo.html">Explorar Catalogo</a>
+                        <a class="btn ghost" href="./dashboard-vista.html">Ver Indicadores</a>
+                    </div>
+                </div>
+
+                <aside class="hero-visual">
+                    <div class="hero-visual-media"></div>
+                    <div class="hero-floating-note glass-panel">
+                        <span class="mini-label">Proyecto destacado</span>
+                        <strong>Residencial Estandar 96m2</strong>
+                        <p>Planos listos, especificaciones por rubro y presupuesto dual (comercial + tecnico).</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="container public-shell">
+            <aside class="catalog-sidebar shell-card">
+                <div class="sidebar-block">
+                    <span class="mini-label">Navegacion</span>
+                    <h3>Flujo de cliente</h3>
+                    <p>1) Inicio general 2) Catalogo y cotizacion 3) Contacto y pago.</p>
+                </div>
+                <div class="sidebar-block">
+                    <span class="mini-label">Categorias</span>
+                    <div class="category-stack">
+                        <button type="button" class="category-chip is-active">Residencial</button>
+                        <button type="button" class="category-chip">Obra Publica</button>
+                        <button type="button" class="category-chip">Software / ERP</button>
+                    </div>
+                </div>
+                <div class="sidebar-block sidebar-calculator">
+                    <span class="mini-label">Calculadora</span>
+                    <p>La calculadora detallada se ejecuta en la pantalla de catalogo por modelo.</p>
+                    <a class="btn primary" href="./catalogo.html">Ir a calcular</a>
+                </div>
+            </aside>
+
+            <section class="section shell-section">
+                <div class="section-headline">
+                    <div>
+                        <span class="mini-label">Estructura</span>
+                        <h2>Pagina general alineada con Stitch</h2>
+                        <p>
+                            Esta vista mantiene el enfoque de portada y separa la experiencia de cotizacion por area a la pantalla de seleccion de modelo.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="metric">
+                        <h4>Catalogo tecnico</h4>
+                        <p>Disenos por categoria con ficha comercial y calculo dual.</p>
+                    </article>
+                    <article class="metric">
+                        <h4>Integracion precios</h4>
+                        <p>Fuente principal Mongo Atlas con fallback local.</p>
+                    </article>
+                    <article class="metric">
+                        <h4>Ruta comercial</h4>
+                        <p>WhatsApp, seguimiento de leads y validacion de comprobantes.</p>
+                    </article>
+                    <article class="metric span-2">
+                        <h4>Siguiente paso</h4>
+                        <p>
+                            Desde aqui el cliente pasa al catalogo para seleccionar modelo, ajustar metraje y obtener costo comercial + referencia tecnica.
+                        </p>
+                    </article>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="footer public-footer">CONSTRUCTORA WM/M&S · Portada General</footer>
+
+    <div id="toast" class="toast"></div>
+    <script src="./app.js"></script>
 </body>
 </html>

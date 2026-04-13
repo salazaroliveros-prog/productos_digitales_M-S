@@ -242,6 +242,7 @@ label,
   border: 1px solid var(--outline);
   border-radius: 16px;
   padding: 1rem;
+  box-shadow: 0 16px 34px -30px rgba(4, 21, 37, 0.5);
 }
 
 .sidebar-block + .sidebar-block {
@@ -276,7 +277,13 @@ label,
   border-radius: 10px;
   font-size: 0.78rem;
   font-weight: 700;
-  cursor: default;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.category-chip:hover {
+  transform: translateX(2px);
+  border-color: rgba(4, 21, 37, 0.24);
 }
 
 .category-chip.is-active {
@@ -292,6 +299,11 @@ label,
   padding: 0.9rem;
 }
 
+.sidebar-calculator .btn {
+  margin-top: 0.55rem;
+  width: 100%;
+}
+
 .sidebar-calculator .mini-label,
 .sidebar-calculator p {
   color: rgba(255, 255, 255, 0.82);
@@ -300,6 +312,11 @@ label,
 .catalog-content {
   display: grid;
   gap: 1rem;
+}
+
+.dashboard-shell {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(243, 244, 245, 0.82));
 }
 
 .page-stack {

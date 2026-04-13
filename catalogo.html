@@ -13,7 +13,7 @@
     <header class="public-topbar">
         <div class="container topbar-inner">
             <div class="topbar-brand">
-                <span class="eyebrow">Pantalla Cliente</span>
+                <span class="eyebrow">Design Studio</span>
                 <h1>CONSTRUCTORA WM/M&S</h1>
             </div>
             <nav class="topbar-nav">
@@ -27,67 +27,82 @@
     </header>
 
     <main class="public-main">
-        <section class="public-hero compact-hero">
-            <div class="container split-shell split-shell-hero">
-                <div class="shell-section">
-                    <span class="mini-label">Vista cliente</span>
-                    <h2 class="page-title">Catalogo de productos y servicios</h2>
-                    <p class="page-copy">
-                        Revisa casas modelo, soluciones de software y presupuestos dinamicos. Desde aqui el cliente explora, cotiza y luego avanza a registro o contacto comercial.
+        <section class="public-hero">
+            <div class="container hero-layout">
+                <div class="hero-copy">
+                    <span class="hero-badge">Technical Blueprint Catalog</span>
+                    <h2>Selecciona un diseno y calcula en tiempo real</h2>
+                    <p>
+                        Esta pantalla es el catalogo operativo estilo Stitch: cada modelo muestra dimensiones, costo comercial y referencia tecnica.
+                        Ajusta metraje por proyecto y cotiza al instante.
                     </p>
                     <div class="hero-actions">
-                        <a class="btn primary" href="./login.html#registro-nuevo">Registrar para seguimiento</a>
-                        <a class="btn ghost" href="./contacto.html">Hablar con asesor</a>
+                        <a class="btn primary" href="#catalogo-grid">Explorar modelos</a>
+                        <a class="btn ghost" href="./contacto.html">Solicitar asesoria</a>
                     </div>
                 </div>
-                <aside class="catalog-sidebar shell-card page-sidebar">
-                    <div class="sidebar-block">
-                        <span class="mini-label">Lineas</span>
-                        <h3>Catalogo de precision</h3>
-                        <p>Visualiza productos publicos y activa premium cuando tu compra sea verificada.</p>
-                    </div>
-                    <div class="sidebar-block">
-                        <span class="mini-label">Categorias</span>
-                        <div class="category-stack">
-                            <button type="button" class="category-chip is-active">Residencial</button>
-                            <button type="button" class="category-chip">Software / ERP</button>
-                            <button type="button" class="category-chip">Consultoria</button>
-                        </div>
-                    </div>
-                    <div class="sidebar-block sidebar-calculator">
-                        <span class="mini-label">Presupuesto dinamico</span>
-                        <p>Los precios de materiales y mano de obra se calculan segun el area y los costos vigentes.</p>
+
+                <aside class="hero-visual">
+                    <div class="hero-visual-media"></div>
+                    <div class="hero-floating-note glass-panel">
+                        <span class="mini-label">Current Project</span>
+                        <strong>Casa Colonial Jutiapa</strong>
+                        <p>Escala 1:50 · Presupuesto dual comercial + tecnico para cerrar ventas con confianza.</p>
                     </div>
                 </aside>
             </div>
         </section>
 
-        <section class="container page-stack">
-            <section class="shell-section">
-                <div class="section-headline">
-                    <div>
-                        <span class="mini-label">Explorar</span>
-                        <h2>Casas modelo, planos y apps</h2>
-                        <p>Selecciona un modelo para revisar dimensiones, cotizar y luego pasar a contacto o registro segun el avance de venta.</p>
+        <section class="container public-shell">
+            <aside class="catalog-sidebar shell-card">
+                <div class="sidebar-block">
+                    <span class="mini-label">Filtros de catalogo</span>
+                    <h3>Segmentacion tecnica</h3>
+                    <p>Filtra por tipo de proyecto y genera una cotizacion especifica para el cliente.</p>
+                </div>
+                <div class="sidebar-block">
+                    <span class="mini-label">Categorias</span>
+                    <div class="category-stack">
+                        <button type="button" class="category-chip is-active">Residencial</button>
+                        <button type="button" class="category-chip">Obra Publica</button>
+                        <button type="button" class="category-chip">App / ERP</button>
+                        <button type="button" class="category-chip">Personalizado</button>
                     </div>
                 </div>
-                <div id="catalogo-grid" class="catalog-grid surgical-grid"></div>
-            </section>
+                <div class="sidebar-block sidebar-calculator">
+                    <span class="mini-label">Modo calculadora</span>
+                    <p>Selecciona un modelo, mueve el metraje y usa el boton Calcular para actualizar costos al instante.</p>
+                    <a class="btn ghost" href="./login.html#acceso-aprobado">Desbloquear premium</a>
+                </div>
+            </aside>
 
-            <section class="shell-section dashboard-shell">
-                <div class="section-headline">
-                    <div>
-                        <span class="mini-label">Indicadores</span>
-                        <h2>Confianza comercial</h2>
+            <div class="catalog-content">
+                <section class="shell-section">
+                    <div class="section-headline">
+                        <div>
+                            <span class="mini-label">Catalogo activo</span>
+                            <h2>Disenos disponibles</h2>
+                            <p>Cada tarjeta integra dimensiones, alcance y cotizacion dinamica por area.</p>
+                        </div>
                     </div>
-                </div>
-                <div id="dashboard-grid" class="dashboard-grid"></div>
-            </section>
+                    <div id="catalogo-grid" class="catalog-grid surgical-grid"></div>
+                </section>
+
+                <section class="shell-section dashboard-shell">
+                    <div class="section-headline">
+                        <div>
+                            <span class="mini-label">Indicadores</span>
+                            <h2>Confianza comercial</h2>
+                        </div>
+                    </div>
+                    <div id="dashboard-grid" class="dashboard-grid"></div>
+                </section>
+            </div>
         </section>
     </main>
 
     <footer class="footer public-footer">
-        CONSTRUCTORA WM/M&S · Catalogo comercial en pantalla dedicada
+        CONSTRUCTORA WM/M&S · Catalogo técnico-comercial
     </footer>
 
     <div id="toast" class="toast"></div>
