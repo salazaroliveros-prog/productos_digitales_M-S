@@ -5,6 +5,7 @@ const state = {
     intervalMs: 3000,
     fastIntervalMs: 1000,
     fastModeUntil: 0,
+    fastModeReason: '',
     timer: null,
     inFlight: false,
     lastSyncAt: null,
@@ -73,7 +74,7 @@ function updateRealtimeStatusLabel() {
 
   const enabled = state.realtime.enabled;
   const fastMode = enabled && Date.now() < state.realtime.fastModeUntil;
-  const modeText = fastMode ? ' (modo rapido)' : '';
+  const modeText = fastMode ? ` (modo rapido${state.realtime.fastModeReason ? `: ${state.realtime.fastModeReason}` : ''})` : '';
   const stamp = state.realtime.lastSyncAt
     ? ` · ultima sync ${new Date(state.realtime.lastSyncAt).toLocaleTimeString('es-GT')}`
     : '';
@@ -103,6 +104,18 @@ function shouldActivateFastMode(previousSnapshot, currentSnapshot) {
   return hasNewLead || hasNewQuote;
 }
 
+function getFastModeReason(previousSnapshot, currentSnapshot) {
+  if (!previousSnapshot || !currentSnapshot) return '';
+
+  const hasNewLead = currentSnapshot.topLeadId !== previousSnapshot.topLeadId;
+  const hasNewQuote = currentSnapshot.cotizacionesCliente > previousSnapshot.cotizacionesCliente;
+
+  if (hasNewLead && hasNewQuote) return 'nuevo lead y nueva cotizacion';
+  if (hasNewLead) return 'nuevo lead';
+  if (hasNewQuote) return 'nueva cotizacion';
+  return '';
+}
+
 function scheduleRealtimeNextTick() {
   stopRealtime();
   if (!state.realtime.enabled) {
@@ -129,9 +142,13 @@ async function refreshRealtimeTick() {
   try {
     const [, metricas, leads] = await Promise.all([loadVentas(), loadMetricas(), loadLeads()]);
     const snapshot = createRealtimeSnapshot(metricas, leads);
+    const fastModeReason = getFastModeReason(state.realtime.lastSignature, snapshot);
 
     if (shouldActivateFastMode(state.realtime.lastSignature, snapshot)) {
       state.realtime.fastModeUntil = Date.now() + 12000;
+      state.realtime.fastModeReason = fastModeReason;
+    } else if (Date.now() >= state.realtime.fastModeUntil) {
+      state.realtime.fastModeReason = '';
     }
 
     state.realtime.lastSignature = snapshot;
