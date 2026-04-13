@@ -164,6 +164,72 @@ La migración copia datos de `data/*.json` a colecciones Mongo:
 - `accesos`
 - `paquetes`
 
+## Vendedor automatico: WhatsApp + Make
+
+### Endpoints para webhook y precios
+
+- `GET /api/webhooks/whatsapp` (verificacion Meta)
+- `POST /api/webhooks/whatsapp` (entrada de mensajes)
+- `GET /api/stitch/precios-jutiapa` (precios compartidos desde Mongo)
+- `POST /api/webhooks/make/comprobante-validado` (confirmacion desde Make)
+
+### Enrutamiento listo para Make
+
+El endpoint `POST /api/webhooks/whatsapp` responde con `routes[]` y una accion por mensaje:
+
+- `responder-precio`
+- `subir-foto-drive`
+- `activar-flujo-pago`
+- `sin-accion`
+
+Ejemplo simplificado de salida:
+
+```json
+{
+	"ok": true,
+	"processed": 1,
+	"routes": [
+		{
+			"from": "5025XXXXXXX",
+			"messageType": "text",
+			"action": "responder-precio",
+			"replyText": "Precio referencial Jutiapa por m2 ...",
+			"makeHints": {
+				"uploadToDrive": false,
+				"notifyOwner": false,
+				"ownerPhone": "502XXXXXXXX"
+			}
+		}
+	]
+}
+```
+
+### Escenario recomendado en Make (modulos)
+
+1. `Custom Webhook` (recibe POST de WhatsApp Meta).
+2. `HTTP - Make a request` a `POST /api/webhooks/whatsapp` con el payload recibido.
+3. `Router` con filtros por `routes[].action`:
+	 - Rama `responder-precio`: enviar `replyText` por WhatsApp Business API.
+	 - Rama `subir-foto-drive`: guardar imagen en Google Drive y notificar al numero personal (`ownerPhone`).
+	 - Rama `activar-flujo-pago`: enviar mensaje de instrucciones para comprobante.
+4. Cuando administracion valida pago:
+	 - `HTTP - Make a request` a `POST /api/webhooks/make/comprobante-validado` con `comprobanteId`, `estado=validado`, `ventaId`.
+5. El backend activa entrega y credenciales; opcionalmente envia correo usando SMTP (puede ser Gmail SMTP).
+
+### Payload de confirmacion desde Make
+
+```json
+{
+	"comprobanteId": "CMP-123...",
+	"estado": "validado",
+	"ventaId": "VTA-123...",
+	"validadoPor": "make-scenario",
+	"notas": "Pago confirmado por revision manual"
+}
+```
+
+Si `MAKE_WEBHOOK_SECRET` esta configurado, enviar header `x-webhook-secret`.
+
 ## Conexión recomendada
 
 1. Activar MongoDB Atlas con variables `DB_PROVIDER`, `MONGO_URI` y `MONGO_DB_NAME`.

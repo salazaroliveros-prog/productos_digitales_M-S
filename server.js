@@ -47,6 +47,7 @@ const MAX_JSON_BODY_MB = parseInt(process.env.MAX_JSON_BODY_MB || '6', 10);
 const COMPROBANTE_MAX_MB = parseInt(process.env.COMPROBANTE_MAX_MB || '5', 10);
 const MAKE_WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET || '';
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || '';
+const WHATSAPP_OWNER_PHONE = process.env.WHATSAPP_OWNER_PHONE || '';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -1609,6 +1610,51 @@ async function getPreciosConector() {
   return readCollection('materiales', []);
 }
 
+function extractWhatsappMessageText(message) {
+  return String(message?.text?.body || message?.button?.text || message?.interactive?.button_reply?.title || '').trim();
+}
+
+function detectWhatsappMessageType(message) {
+  if (message?.type) return String(message.type).toLowerCase();
+  if (message?.image) return 'image';
+  if (message?.text) return 'text';
+  return 'unknown';
+}
+
+async function buildWhatsappPrecioReply() {
+  const precios = await getPreciosConector();
+  if (!Array.isArray(precios) || precios.length === 0) {
+    return {
+      texto:
+        'Precios no disponibles en este momento. Escribe PAGO para activar el flujo de validacion y un asesor te atiende.',
+      source: 'no-data',
+    };
+  }
+
+  const preferredRates = ['RATE-RS-01', 'RATE-IS-01', 'RATE-RL-01'];
+  const rate = preferredRates.map((id) => precios.find((item) => item.id === id)).find(Boolean)
+    || precios.find((item) => String(item.id || '').toUpperCase().startsWith('RATE-'));
+  const cemento = precios.find((item) => String(item.nombre || '').toLowerCase().includes('cemento'));
+
+  if (rate) {
+    const mat = Number(rate.costoMaterial || 0);
+    const mo = Number(rate.costoManoObra || 0);
+    const cementoTxt = cemento
+      ? ` | ${cemento.nombre}: Q${Number(cemento.costoMaterial || 0).toFixed(2)} por ${cemento.unidad || 'unidad'}`
+      : '';
+    return {
+      texto: `Precio referencial Jutiapa por m2 (${rate.nombre}): Materiales Q${mat.toFixed(2)} + Mano de obra Q${mo.toFixed(2)}.${cementoTxt}`,
+      source: 'mongo-precios',
+    };
+  }
+
+  return {
+    texto:
+      'Tenemos catalogo actualizado de materiales. Comparte tu metraje y te devolvemos una cotizacion estimada.',
+    source: 'mongo-materiales',
+  };
+}
+
 async function cotizar(disenoId, areaM2, wasteFactor = 0.05) {
   const materiales = await readCollection('materiales', []);
   const disenos = await readCollection('disenos', []);
@@ -1669,8 +1715,45 @@ async function routeApi(req, res, url) {
     const processed = [];
     for (const message of messages) {
       const from = String(message.from || '').trim();
-      const text = String(message.text?.body || '').toLowerCase();
-      if (text.includes('pago')) {
+      const messageType = detectWhatsappMessageType(message);
+      const text = extractWhatsappMessageText(message).toLowerCase();
+      let action = 'sin-accion';
+      let replyText = 'Recibido. En breve un asesor te atiende.';
+      const makeHints = {
+        uploadToDrive: false,
+        notifyOwner: false,
+        ownerPhone: WHATSAPP_OWNER_PHONE || '',
+      };
+
+      if (text.includes('precio') || text.includes('cotiza')) {
+        const precioReply = await buildWhatsappPrecioReply();
+        action = 'responder-precio';
+        replyText = precioReply.texto;
+        await registrarConsulta({
+          evento: 'whatsapp-precio-trigger',
+          detalle: 'Usuario solicito precio desde WhatsApp',
+          canal: 'WhatsApp',
+          origen: 'webhook-whatsapp',
+          clienteEmail: '',
+          tokenValido: false,
+        });
+      } else if (messageType === 'image') {
+        action = 'subir-foto-drive';
+        replyText =
+          'Foto recibida. Guardala en Google Drive y notifica validacion al administrador para confirmar el pago.';
+        makeHints.uploadToDrive = true;
+        makeHints.notifyOwner = true;
+        await registrarConsulta({
+          evento: 'whatsapp-foto-trigger',
+          detalle: 'Usuario envio foto/comprobante por WhatsApp',
+          canal: 'WhatsApp',
+          origen: 'webhook-whatsapp',
+          clienteEmail: '',
+          tokenValido: false,
+        });
+      } else if (text.includes('pago')) {
+        action = 'activar-flujo-pago';
+        replyText = 'Perfecto. Comparte el comprobante y en cuanto validemos se habilita tu entrega digital.';
         await registrarConsulta({
           evento: 'whatsapp-pago-trigger',
           detalle: 'Usuario solicito flujo de pago desde WhatsApp',
@@ -1679,11 +1762,25 @@ async function routeApi(req, res, url) {
           clienteEmail: '',
           tokenValido: false,
         });
-        processed.push({ from, action: 'captured-pago-keyword' });
       }
+
+      processed.push({
+        from,
+        messageId: String(message.id || ''),
+        messageType,
+        action,
+        replyText,
+        makeHints,
+      });
     }
 
-    sendJson(res, 200, { ok: true, processed: processed.length, detail: processed });
+    sendJson(res, 200, {
+      ok: true,
+      processed: processed.length,
+      routes: processed,
+      note:
+        'Usa routes[].action en Make Router: responder-precio | subir-foto-drive | activar-flujo-pago | sin-accion',
+    });
     return true;
   }
 
