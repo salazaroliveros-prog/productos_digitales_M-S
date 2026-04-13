@@ -1,9 +1,18 @@
 const state = {
   session: null,
+  realtime: {
+    enabled: true,
+    intervalMs: 5000,
+    timer: null,
+    inFlight: false,
+    lastSyncAt: null,
+  },
 };
 
 const el = {
   authStatus: document.getElementById('admin-auth-status'),
+  realtimeStatus: document.getElementById('admin-realtime-status'),
+  realtimeToggle: document.getElementById('admin-realtime-toggle'),
   lockedNote: document.getElementById('admin-locked-note'),
   logoutBtn: document.getElementById('admin-logout-btn'),
   inventario: document.getElementById('admin-inventario'),
@@ -53,6 +62,54 @@ function setAdminLockState(isUnlocked) {
 
   if (el.lockedNote) {
     el.lockedNote.classList.toggle('hidden', isUnlocked);
+  }
+}
+
+function updateRealtimeStatusLabel() {
+  if (!el.realtimeStatus || !el.realtimeToggle) return;
+
+  const enabled = state.realtime.enabled;
+  const stamp = state.realtime.lastSyncAt
+    ? ` · ultima sync ${new Date(state.realtime.lastSyncAt).toLocaleTimeString('es-GT')}`
+    : '';
+
+  el.realtimeStatus.textContent = enabled
+    ? `Tiempo real: activo cada ${Math.round(state.realtime.intervalMs / 1000)}s${stamp}`
+    : 'Tiempo real: pausado';
+  el.realtimeToggle.textContent = enabled ? 'Pausar tiempo real' : 'Activar tiempo real';
+}
+
+async function refreshRealtimeTick() {
+  if (!state.session || !state.realtime.enabled || state.realtime.inFlight) {
+    return;
+  }
+
+  state.realtime.inFlight = true;
+  try {
+    await Promise.all([loadVentas(), loadMetricas(), loadLeads()]);
+    state.realtime.lastSyncAt = Date.now();
+    updateRealtimeStatusLabel();
+  } catch (_error) {
+  } finally {
+    state.realtime.inFlight = false;
+  }
+}
+
+function startRealtime() {
+  stopRealtime();
+  if (!state.realtime.enabled) {
+    updateRealtimeStatusLabel();
+    return;
+  }
+
+  updateRealtimeStatusLabel();
+  state.realtime.timer = setInterval(refreshRealtimeTick, state.realtime.intervalMs);
+}
+
+function stopRealtime() {
+  if (state.realtime.timer) {
+    clearInterval(state.realtime.timer);
+    state.realtime.timer = null;
   }
 }
 
@@ -493,11 +550,15 @@ async function connectAdmin() {
     el.authStatus.textContent = `Sesion activa: ${session.username}`;
     setAdminLockState(true);
     await Promise.all([loadInventario(), loadVentas(), loadMetricas(), loadLeads(), loadHistorial(), loadPaquetes(), loadSmtpStatus()]);
+    state.realtime.lastSyncAt = Date.now();
+    startRealtime();
     showToast('Back-office conectado');
   } catch (error) {
     state.session = null;
     el.authStatus.textContent = 'Error de autenticacion';
     setAdminLockState(false);
+    stopRealtime();
+    updateRealtimeStatusLabel();
     showToast(error.message, true);
   }
 }
@@ -586,16 +647,30 @@ el.smtpTestBtn.addEventListener('click', async () => {
   }
 });
 
+el.realtimeToggle.addEventListener('click', () => {
+  state.realtime.enabled = !state.realtime.enabled;
+  if (state.realtime.enabled) {
+    startRealtime();
+    showToast('Tiempo real activado');
+  } else {
+    stopRealtime();
+    updateRealtimeStatusLabel();
+    showToast('Tiempo real pausado');
+  }
+});
+
 el.logoutBtn.addEventListener('click', async () => {
   try {
     await adminRequest('/api/admin/logout', { method: 'POST' });
   } catch (_error) {
   } finally {
+    stopRealtime();
     window.location.href = '/admin-login.html';
   }
 });
 
 (function bootstrap() {
   setAdminLockState(false);
+  updateRealtimeStatusLabel();
   connectAdmin();
 })();
