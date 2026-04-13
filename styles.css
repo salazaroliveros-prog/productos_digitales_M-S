@@ -875,6 +875,24 @@ textarea {
   font-size: 0.78rem;
 }
 
+.inventory-bulk-controls {
+  margin-bottom: 0.8rem;
+  align-items: center;
+}
+
+.check-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: #425b70;
+  font-weight: 700;
+}
+
+.check-inline input {
+  width: auto;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;

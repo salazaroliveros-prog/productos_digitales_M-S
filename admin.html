@@ -37,6 +37,14 @@
 
     <section class="section admin-private hidden">
       <h2>Inventario (precios)</h2>
+      <div class="inline-form admin-gap-top inventory-bulk-controls">
+        <div class="field field-compact">
+          <label for="inv-adjust-pct">Ajuste anual (%)</label>
+          <input id="inv-adjust-pct" type="number" step="0.01" value="6" />
+        </div>
+        <label class="check-inline"><input id="inv-adjust-include-pct" type="checkbox" /> Incluir factores porcentuales</label>
+        <button id="inv-adjust-apply" type="button" class="btn ghost">Actualizar ano</button>
+      </div>
       <div id="admin-inventario"></div>
     </section>
 

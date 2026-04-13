@@ -1,5 +1,6 @@
 const state = {
   session: null,
+  inventarioRows: [],
   historialRows: [],
   historialView: {
     sortKey: 'fecha',
@@ -27,6 +28,9 @@ const el = {
   lockedNote: document.getElementById('admin-locked-note'),
   logoutBtn: document.getElementById('admin-logout-btn'),
   inventario: document.getElementById('admin-inventario'),
+  invAdjustPct: document.getElementById('inv-adjust-pct'),
+  invAdjustIncludePct: document.getElementById('inv-adjust-include-pct'),
+  invAdjustApply: document.getElementById('inv-adjust-apply'),
   disenoForm: document.getElementById('admin-diseno-form'),
   ventas: document.getElementById('admin-ventas'),
   kpis: document.getElementById('admin-kpis'),
@@ -844,7 +848,49 @@ async function cotizarPaquete(id) {
 
 async function loadInventario() {
   const inv = await adminRequest('/api/integracion/appsheet/inventario');
+  state.inventarioRows = Array.isArray(inv) ? inv : [];
   renderInventario(inv);
+}
+
+async function applyAnnualInventoryAdjustment() {
+  const pct = Number(el.invAdjustPct?.value || 0);
+  if (!Number.isFinite(pct)) {
+    throw new Error('Porcentaje anual invalido');
+  }
+
+  if (!state.inventarioRows.length) {
+    throw new Error('Inventario vacio, recarga la seccion');
+  }
+
+  const includePctFactors = Boolean(el.invAdjustIncludePct?.checked);
+  const multiplier = 1 + pct / 100;
+
+  const targets = state.inventarioRows.filter((item) => {
+    const isPct = String(item.unidad || '').toLowerCase() === 'pct';
+    return includePctFactors || !isPct;
+  });
+
+  if (!targets.length) {
+    throw new Error('No hay registros para actualizar con la configuracion seleccionada');
+  }
+
+  if (!confirm(`Aplicar ajuste anual de ${pct.toFixed(2)}% a ${targets.length} registros?`)) {
+    return;
+  }
+
+  await Promise.all(
+    targets.map((item) => {
+      const costoMaterial = Number((Number(item.costoMaterial || 0) * multiplier).toFixed(6));
+      const costoManoObra = Number((Number(item.costoManoObra || 0) * multiplier).toFixed(6));
+      return adminRequest(`/api/integracion/appsheet/materiales/${item.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ costoMaterial, costoManoObra, region: item.region || 'Jutiapa' }),
+      });
+    })
+  );
+
+  await loadInventario();
+  showToast(`Ajuste anual aplicado a ${targets.length} registros`);
 }
 
 async function loadVentas() {
@@ -1027,6 +1073,13 @@ el.disenoForm.addEventListener('submit', async (event) => {
 });
 
 el.refresh.addEventListener('click', loadMetricas);
+el.invAdjustApply?.addEventListener('click', async () => {
+  try {
+    await applyAnnualInventoryAdjustment();
+  } catch (error) {
+    showToast(error.message, true);
+  }
+});
 el.histFiltrar.addEventListener('click', loadHistorial);
 el.histEstado?.addEventListener('change', () => {
   resetHistorialToFirstPage();
