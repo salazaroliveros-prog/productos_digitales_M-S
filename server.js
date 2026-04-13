@@ -297,6 +297,39 @@ async function cleanExpiredPasswordResets() {
   }
 }
 
+function validateMetricsQuery(query) {
+  const desde = query ? normalizeDateOnly(query.get('desde')) : null;
+  const hasta = query ? normalizeDateOnly(query.get('hasta')) : null;
+
+  // Validar que ambas fechas sean válidas si se proporcionan
+  if ((desde && !desde.match(/^\d{4}-\d{2}-\d{2}$/)) || 
+      (hasta && !hasta.match(/^\d{4}-\d{2}-\d{2}$/))) {
+    throw new ApiError(400, 'Formato de fecha invalido. Use YYYY-MM-DD');
+  }
+
+  // Validar que desde <= hasta
+  if (desde && hasta && desde > hasta) {
+    throw new ApiError(400, 'Fecha "desde" no puede ser mayor a "hasta"');
+  }
+
+  // Validar rango máximo de 90 días
+  const MAX_DAYS = 90;
+  if (desde && hasta) {
+    const diffDays = (new Date(hasta).getTime() - new Date(desde).getTime()) / (1000 * 60 * 60 * 24);
+    if (diffDays > MAX_DAYS) {
+      throw new ApiError(400, `Rango máximo permitido: ${MAX_DAYS} días. Rango solicitado: ${Math.ceil(diffDays)} días`);
+    }
+  }
+
+  // Validar que no sea fecha futura
+  const today = new Date().toISOString().slice(0, 10);
+  if (hasta && hasta > today) {
+    throw new ApiError(400, 'No se pueden consultar fechas futuras');
+  }
+
+  return { desde, hasta };
+}
+
 async function ensureMongoConnection() {
   if (runtimeProvider !== 'mongo') {
     return;
@@ -721,8 +754,27 @@ async function getIntegrationDataset(tableName) {
 function filterVentasByQuery(ventas, query) {
   const estado = String(query.get('estadoPago') || '').trim().toLowerCase();
   const canal = String(query.get('canal') || '').trim().toLowerCase();
-  const desde = normalizeDateOnly(query.get('desde'));
-  const hasta = normalizeDateOnly(query.get('hasta'));
+  
+  // Validate estado parameter
+  const validEstados = ['pagado', 'pendiente', ''];
+  if (estado && !validEstados.includes(estado)) {
+    throw new ApiError(400, `Estado inválido. Valores permitidos: ${validEstados.filter(Boolean).join(', ')}`);
+  }
+
+  // Validate canal parameter (max length)
+  if (canal && canal.length > 100) {
+    throw new ApiError(400, 'Canal no puede exceder 100 caracteres');
+  }
+
+  // Validate date range
+  let desde, hasta;
+  try {
+    const validated = validateMetricsQuery(query);
+    desde = validated.desde;
+    hasta = validated.hasta;
+  } catch (error) {
+    throw error;
+  }
 
   return ventas.filter((venta) => {
     const ventaEstado = String(venta.estadoPago || '').toLowerCase();
@@ -1110,14 +1162,21 @@ function calcularCostoBaseDiseno(diseno, materiales) {
 }
 
 async function getMetricasNegocio(query = null) {
+  // Validate query parameters
+  let desde, hasta;
+  try {
+    const validated = validateMetricsQuery(query);
+    desde = validated.desde;
+    hasta = validated.hasta;
+  } catch (error) {
+    throw error;
+  }
+
   const ventas = await readCollection('ventas', []);
   const disenos = await readCollection('disenos', []);
   const materiales = await readCollection('materiales', []);
   const consultas = await readCollection('consultas', []);
   const notificaciones = await readCollection('notificaciones', []);
-  // Safely extract date parameters, handling null/undefined/empty strings
-  const desde = query && query.get('desde') ? normalizeDateOnly(query.get('desde')) : null;
-  const hasta = query && query.get('hasta') ? normalizeDateOnly(query.get('hasta')) : null;
 
   const disenosMap = disenos.reduce((acc, diseno) => {
     acc[diseno.id] = diseno;
