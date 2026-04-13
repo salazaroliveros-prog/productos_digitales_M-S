@@ -27,7 +27,20 @@ const el = {
   accessStatus: document.getElementById('access-status'),
   logoutBtn: document.getElementById('logout-btn'),
   toast: document.getElementById('toast'),
+  m2Slider: document.getElementById('m2Slider'),
+  areaLabel: document.getElementById('areaLabel'),
+  costoMat: document.getElementById('costoMat'),
+  costoMO: document.getElementById('costoMO'),
+  heroImage: document.getElementById('heroImage'),
+  heroTitle: document.getElementById('heroTitle'),
+  heroDesc: document.getElementById('heroDesc'),
+  btnConstruirFuturo: document.getElementById('btnConstruirFuturo'),
+  preciosFuente: document.getElementById('preciosFuente'),
 };
+
+const VITRINA_DEFAULT_RATES = { mat: 850.5, mo: 450, source: 'fallback-local' };
+let vitrinaDisenoSeleccionado = null;
+let vitrinaRates = { ...VITRINA_DEFAULT_RATES };
 
 function showToast(message, isError = false) {
   if (!el.toast) {
@@ -328,6 +341,122 @@ async function loadDisenos() {
   renderCatalogo();
 }
 
+function renderVitrinaBootstrapQuote(areaM2) {
+  if (!el.areaLabel || !el.costoMat || !el.costoMO) {
+    return;
+  }
+
+  const matTotal = areaM2 * vitrinaRates.mat;
+  const moTotal = areaM2 * vitrinaRates.mo;
+
+  el.areaLabel.innerText = String(areaM2);
+  el.costoMat.innerText = `Q ${Math.round(matTotal).toLocaleString('en-US')}`;
+  el.costoMO.innerText = `Q ${Math.round(moTotal).toLocaleString('en-US')}`;
+
+  if (el.preciosFuente) {
+    const sourceLabel = vitrinaRates.source === 'mongo-stitch'
+      ? 'Mongo Atlas (Precios_Jutiapa)'
+      : 'Fallback local';
+    el.preciosFuente.innerText = `Tarifas base por m2: Materiales Q ${vitrinaRates.mat.toFixed(2)} | Mano de obra Q ${vitrinaRates.mo.toFixed(2)} (${sourceLabel})`;
+  }
+}
+
+function computeVitrinaRatesFromPrecios(precios) {
+  if (!Array.isArray(precios) || precios.length === 0) {
+    return { ...VITRINA_DEFAULT_RATES };
+  }
+
+  const byId = new Map(precios.map((item) => [String(item.id || ''), item]));
+  const preferred = ['RATE-RS-01', 'RATE-IS-01', 'RATE-RL-01'];
+  const direct = preferred.map((id) => byId.get(id)).find(Boolean);
+
+  const rateCandidates = precios.filter((item) => {
+    const unidad = String(item.unidad || '').toLowerCase();
+    const id = String(item.id || '').toUpperCase();
+    return unidad === 'm2' && id.startsWith('RATE-');
+  });
+
+  const selected = direct || rateCandidates[0];
+  if (!selected) {
+    return { ...VITRINA_DEFAULT_RATES };
+  }
+
+  const mat = Number(selected.costoMaterial || 0);
+  const mo = Number(selected.costoManoObra || 0);
+
+  if (!Number.isFinite(mat) || !Number.isFinite(mo) || mat <= 0 || mo <= 0) {
+    return { ...VITRINA_DEFAULT_RATES };
+  }
+
+  return {
+    mat,
+    mo,
+    source: 'mongo-stitch',
+  };
+}
+
+async function fetchVitrinaRatesFromMongo() {
+  try {
+    const precios = await request('/api/stitch/precios-jutiapa');
+    return computeVitrinaRatesFromPrecios(precios);
+  } catch (_error) {
+    return { ...VITRINA_DEFAULT_RATES };
+  }
+}
+
+async function initBootstrapVitrina() {
+  if (!el.m2Slider) {
+    return;
+  }
+
+  vitrinaRates = await fetchVitrinaRatesFromMongo();
+
+  let disenos = [];
+  try {
+    disenos = await request('/api/disenos');
+  } catch (_error) {
+    disenos = [];
+  }
+
+  vitrinaDisenoSeleccionado = disenos.find((item) => item.id === 'DIS-001') || disenos[0] || null;
+
+  if (vitrinaDisenoSeleccionado) {
+    if (el.heroImage && vitrinaDisenoSeleccionado.imagenBase64) {
+      el.heroImage.src = vitrinaDisenoSeleccionado.imagenBase64;
+    }
+
+    if (el.heroTitle) {
+      const area = Math.round(vitrinaDisenoSeleccionado.areaBaseM2 || 120);
+      el.heroTitle.innerText = `${vitrinaDisenoSeleccionado.nombre} (${area}m2)`;
+    }
+
+    if (el.heroDesc) {
+      el.heroDesc.innerText = vitrinaDisenoSeleccionado.descripcion || 'Diseno optimizado para necesidades residenciales.';
+    }
+
+    const defaultArea = Math.min(400, Math.max(50, Math.round(vitrinaDisenoSeleccionado.areaBaseM2 || 120)));
+    el.m2Slider.value = String(defaultArea);
+  }
+
+  const currentArea = Number(el.m2Slider.value || 120);
+  renderVitrinaBootstrapQuote(currentArea);
+
+  el.m2Slider.addEventListener('input', (event) => {
+    const m2 = Number(event.target.value || 120);
+    renderVitrinaBootstrapQuote(m2);
+  });
+
+  if (el.btnConstruirFuturo) {
+    el.btnConstruirFuturo.addEventListener('click', () => {
+      const nombre = vitrinaDisenoSeleccionado?.nombre || 'diseno residencial';
+      const text = encodeURIComponent(
+        `Hola WM/M&S, quiero comprar el paquete para ${nombre}.`
+      );
+      window.location.href = `https://wa.me/502XXXXXXXX?text=${text}`;
+    });
+  }
+}
+
 async function loadDashboard() {
   if (!el.dashboard) {
     return;
@@ -494,7 +623,7 @@ async function bootstrap() {
   try {
     await request('/api/health');
     await refreshSessionFromToken();
-    await Promise.all([loadDisenos(), loadDashboard()]);
+    await Promise.all([loadDisenos(), loadDashboard(), initBootstrapVitrina()]);
     await sendTelemetry({
       evento: 'vista-pagina',
       detalle: window.location.pathname.replace('/', '') || 'index.html',

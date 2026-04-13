@@ -1,68 +1,51 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WM/M&S | Flujo Digital</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WM/M&S - Construyendo el Futuro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --wm-navy: #1a2a3a; --wm-orange: #f39c12; }
+        .hero-card { border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .btn-wm { background-color: var(--wm-orange); color: white; font-weight: bold; border-radius: 25px; }
+        .price-tag { color: var(--wm-navy); font-size: 1.5rem; font-weight: 800; }
+        .title-navy { color: var(--wm-navy); }
+    </style>
 </head>
-<body class="public-body flow-body" data-flow-screen="landing">
-    <header class="flow-header">
-        <div class="container flow-topbar">
-            <div>
-                <p class="flow-logo">WM/M&S</p>
-                <p class="flow-sub">CONSTRUYENDO EL FUTURO</p>
-            </div>
-            <nav class="flow-nav">
-                <a href="./index.html" class="is-current">Inicio</a>
-                <a href="./calculadora.html">Calculador</a>
-                <a href="./paquetes.html">Paquetes</a>
-                <a href="./pago.html">Pago</a>
-                <a href="./appsheet.html">AppSheet</a>
-                <a href="./dashboard-vista.html">Dashboard</a>
-            </nav>
-        </div>
-    </header>
+<body class="bg-light" data-screen="vitrina-bootstrap">
 
-    <main class="container flow-main">
-        <section class="flow-mobile-shell">
-            <div class="phone-frame">
-                <div class="phone-head">
-                    <h1>WM/M&S</h1>
-                    <p>Catalogo principal</p>
+<div class="container py-4">
+    <h2 class="text-center mb-4 title-navy">CATALOGO DE DISENOS WM/M&S</h2>
+
+    <div class="card hero-card mb-4">
+        <img id="heroImage" src="https://placehold.co/1200x600/e9eef5/1a2a3a?text=Diseno+Colonial" class="card-img-top" alt="Diseno Colonial">
+        <div class="card-body">
+            <h5 class="card-title" id="heroTitle">Casa Colonial Jutiapa (120m2)</h5>
+            <p class="text-muted small" id="heroDesc">Optimizado para clima calido y acabados artesanales.</p>
+            <hr>
+
+            <label class="form-label">Ajustar area: <b id="areaLabel">120</b> m2</label>
+            <input type="range" class="form-range" id="m2Slider" min="50" max="400" value="120" step="10" title="Ajustar area de construccion">
+
+            <div class="row mt-3 text-center">
+                <div class="col-6 border-end">
+                    <p class="mb-0 small text-uppercase">Materiales</p>
+                    <p class="price-tag" id="costoMat">Q 102,060</p>
                 </div>
-                <div id="landing-list" class="landing-list"></div>
+                <div class="col-6">
+                    <p class="mb-0 small text-uppercase">Mano de Obra</p>
+                    <p class="price-tag" id="costoMO">Q 54,000</p>
+                </div>
             </div>
-        </section>
 
-        <section class="flow-route-grid">
-            <a class="flow-route" href="./calculadora.html">
-                <h3>2. Calculador Dinamico</h3>
-                <p>M2 con desglose de materiales y mano de obra en tiempo real.</p>
-            </a>
-            <a class="flow-route" href="./paquetes.html">
-                <h3>3. Seleccion de Paquetes</h3>
-                <p>Comparativa BASICO, INTELIGENTE y PRO.</p>
-            </a>
-            <a class="flow-route" href="./pago.html">
-                <h3>4. Pago y Validacion</h3>
-                <p>Flujo chatbot para carga de comprobante.</p>
-            </a>
-            <a class="flow-route" href="./appsheet.html">
-                <h3>5. App de Cuantificacion</h3>
-                <p>Control tecnico de inventario diario para obra.</p>
-            </a>
-            <a class="flow-route" href="./dashboard-vista.html">
-                <h3>6. Dashboard Administrador</h3>
-                <p>Centro de mando para validar ventas y precios.</p>
-            </a>
-        </section>
-    </main>
+            <p id="preciosFuente" class="text-muted small mt-2 mb-0">Tarifas base por m2: Materiales Q 850.50 | Mano de obra Q 450.00</p>
 
-    <div id="flow-toast" class="toast"></div>
-    <script src="./flow.js"></script>
+            <button id="btnConstruirFuturo" class="btn btn-wm w-100 mt-3 py-3" type="button">CONSTRUIR MI FUTURO</button>
+        </div>
+    </div>
+</div>
+
+<script src="./app.js"></script>
 </body>
 </html>

@@ -82,7 +82,7 @@ function styleLabelByIndex(index) {
 }
 
 function renderLandingCatalog() {
-  const target = getById('landing-list');
+  const target = getById('home-diseno-grid');
   if (!target) return;
 
   const items = getFlowCatalogItems();
@@ -98,17 +98,38 @@ function renderLandingCatalog() {
         : '<div class="landing-thumb-fallback"></div>';
 
       return `
-      <article class="landing-item">
-        <div class="landing-thumb">${image}</div>
-        <div class="landing-copy">
-          <h3>${styleLabelByIndex(index)}</h3>
-          <p>${item.nombre}</p>
+      <article class="home-diseno-card">
+        <div class="home-diseno-thumb">${image}</div>
+        <div class="home-diseno-copy">
+          <p class="mini-label">${styleLabelByIndex(index)}</p>
+          <h3>${item.nombre}</h3>
+          <a class="btn cta-orange" href="./calculadora.html?disenoId=${encodeURIComponent(item.id)}">Ir a calculadora</a>
         </div>
-        <a class="btn cta-orange" href="./calculadora.html?disenoId=${encodeURIComponent(item.id)}">COTIZAR AHORA</a>
       </article>
     `;
     })
     .join('');
+}
+
+function setupHomePackageButtons() {
+  const buttons = Array.from(document.querySelectorAll('[data-home-package-id]'));
+  if (!buttons.length) return;
+
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const packageId = button.getAttribute('data-home-package-id');
+      const packagePrice = button.getAttribute('data-home-package-price');
+      const packageName = button.getAttribute('data-home-package-name');
+
+      localStorage.setItem('wmms_selected_package', JSON.stringify({
+        id: packageId,
+        price: Number(packagePrice || 0),
+        name: packageName || '',
+      }));
+
+      window.location.href = './pago.html';
+    });
+  });
 }
 
 async function updateCalculatorQuote() {
@@ -213,6 +234,29 @@ function appendChatMessage(message, role = 'bot') {
   chat.scrollTop = chat.scrollHeight;
 }
 
+async function fetchChatbotPrecioReferencia() {
+  try {
+    const precios = await apiRequest('/api/stitch/precios-jutiapa');
+    if (!Array.isArray(precios) || precios.length === 0) {
+      return '';
+    }
+
+    const cemento = precios.find((item) => String(item.nombre || '').toLowerCase().includes('cemento'));
+    if (!cemento) {
+      return '';
+    }
+
+    const costo = Number(cemento.costoMaterial || 0);
+    if (!Number.isFinite(costo) || costo <= 0) {
+      return '';
+    }
+
+    return `Referencia Jutiapa: ${cemento.nombre} = ${gtq.format(costo)} por ${cemento.unidad || 'unidad'}.`;
+  } catch (_error) {
+    return '';
+  }
+}
+
 function setupPaymentScreen() {
   const packageInfo = getById('pago-paquete');
   const form = getById('pago-form');
@@ -228,6 +272,12 @@ function setupPaymentScreen() {
       appendChatMessage('Gracias. Selecciona un paquete para continuar.');
     }
   }
+
+  fetchChatbotPrecioReferencia().then((note) => {
+    if (note) {
+      appendChatMessage(note);
+    }
+  });
 
   if (!form) return;
 
@@ -343,6 +393,7 @@ async function initFlow() {
   if (screen === 'landing') {
     await loadDisenos();
     renderLandingCatalog();
+    setupHomePackageButtons();
   }
   if (screen === 'calculadora') {
     await setupCalculatorScreen();

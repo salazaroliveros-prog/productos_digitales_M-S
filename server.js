@@ -41,6 +41,7 @@ const STRATEGY_MAX_DISCOUNT = {
 const DB_PROVIDER = String(process.env.DB_PROVIDER || (process.env.MONGO_URI ? 'mongo' : 'json')).toLowerCase();
 const MONGO_URI = process.env.MONGO_URI || '';
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'app_productos_digitales';
+const MONGO_PRECIOS_COLLECTION = process.env.MONGO_PRECIOS_COLLECTION || 'Precios_Jutiapa';
 const MONGO_SEED_ON_START = String(process.env.MONGO_SEED_ON_START || 'true').toLowerCase() === 'true';
 const MAX_JSON_BODY_MB = parseInt(process.env.MAX_JSON_BODY_MB || '6', 10);
 const COMPROBANTE_MAX_MB = parseInt(process.env.COMPROBANTE_MAX_MB || '5', 10);
@@ -1596,6 +1597,18 @@ async function getDashboard() {
   };
 }
 
+async function getPreciosConector() {
+  const collectionName = String(MONGO_PRECIOS_COLLECTION || 'Precios_Jutiapa').trim();
+
+  // En modo Mongo, usa la coleccion compatible con el script de Stitch.
+  if (runtimeProvider === 'mongo') {
+    return readCollection(collectionName, []);
+  }
+
+  // En modo JSON local, devuelve materiales para mantener continuidad funcional.
+  return readCollection('materiales', []);
+}
+
 async function cotizar(disenoId, areaM2, wasteFactor = 0.05) {
   const materiales = await readCollection('materiales', []);
   const disenos = await readCollection('disenos', []);
@@ -2165,6 +2178,11 @@ CONSTRUCTORA WM/M&S
 
   if (req.method === 'GET' && pathname === '/api/materiales') {
     sendJson(res, 200, await readCollection('materiales', []));
+    return true;
+  }
+
+  if (req.method === 'GET' && (pathname === '/api/stitch/precios-jutiapa' || pathname === '/api/mongo/precios-jutiapa')) {
+    sendJson(res, 200, await getPreciosConector());
     return true;
   }
 
