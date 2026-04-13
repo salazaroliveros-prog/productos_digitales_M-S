@@ -1032,6 +1032,10 @@ textarea {
   border-bottom: 1px solid #d9e3ee;
 }
 
+.modal-head .inline-actions {
+  justify-content: flex-end;
+}
+
 .modal-head h3 {
   margin: 0;
   font-size: 0.96rem;
@@ -1056,6 +1060,14 @@ textarea {
   margin: 0 auto;
   border-radius: 10px;
   border: 1px solid #d3dce7;
+  transition: transform 0.2s ease;
+}
+
+@media (max-width: 800px) {
+  .modal-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 .footer {

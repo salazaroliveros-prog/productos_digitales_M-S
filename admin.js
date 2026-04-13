@@ -2,6 +2,11 @@ const state = {
   session: null,
   inventarioRows: [],
   comprobantesRows: [],
+  comprobantePreview: {
+    index: -1,
+    zoom: 1,
+    rotation: 0,
+  },
   historialRows: [],
   historialView: {
     sortKey: 'fecha',
@@ -45,6 +50,12 @@ const el = {
   compPreviewModal: document.getElementById('comp-preview-modal'),
   compPreviewBody: document.getElementById('comp-preview-body'),
   compPreviewClose: document.getElementById('comp-preview-close'),
+  compPreviewPrev: document.getElementById('comp-preview-prev'),
+  compPreviewNext: document.getElementById('comp-preview-next'),
+  compPreviewZoomIn: document.getElementById('comp-preview-zoom-in'),
+  compPreviewZoomOut: document.getElementById('comp-preview-zoom-out'),
+  compPreviewRotate: document.getElementById('comp-preview-rotate'),
+  compPreviewReset: document.getElementById('comp-preview-reset'),
   metDesde: document.getElementById('met-desde'),
   metHasta: document.getElementById('met-hasta'),
   refresh: document.getElementById('admin-refresh'),
@@ -1007,33 +1018,76 @@ function closeComprobantePreview() {
   if (!el.compPreviewModal || !el.compPreviewBody) return;
   el.compPreviewBody.innerHTML = '';
   el.compPreviewModal.classList.add('hidden');
+  state.comprobantePreview.index = -1;
+  state.comprobantePreview.zoom = 1;
+  state.comprobantePreview.rotation = 0;
 }
 
-function openComprobantePreview(path, mimeType) {
-  if (!el.compPreviewModal || !el.compPreviewBody) return;
+function applyPreviewImageTransform() {
+  const image = el.compPreviewBody?.querySelector('.comp-preview-image');
+  if (!image) return false;
 
-  const cleanPath = String(path || '').trim().replace(/\\/g, '/');
+  const { zoom, rotation } = state.comprobantePreview;
+  image.style.transform = `scale(${zoom}) rotate(${rotation}deg)`;
+  image.style.transformOrigin = 'center center';
+  return true;
+}
+
+function renderCurrentComprobantePreview() {
+  if (!el.compPreviewModal || !el.compPreviewBody) return;
+  const current = state.comprobantesRows[state.comprobantePreview.index];
+  if (!current) return;
+
+  const cleanPath = String(current.filePath || '').trim().replace(/\\/g, '/');
   if (!cleanPath) {
     showToast('Comprobante sin ruta de archivo', true);
     return;
   }
 
   const safeUrl = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-  const type = String(mimeType || '').toLowerCase();
+  const type = String(current.mimeType || '').toLowerCase();
 
   if (type.includes('pdf') || safeUrl.toLowerCase().endsWith('.pdf')) {
     el.compPreviewBody.innerHTML = `
       <iframe src="${encodeURI(safeUrl)}" title="Vista previa PDF" class="comp-preview-frame"></iframe>
+      <p><strong>${escapeHtml(current.id || '')}</strong> · ${escapeHtml(current.nombre || '')}</p>
       <p><a href="${encodeURI(safeUrl)}" target="_blank" rel="noreferrer noopener">Abrir PDF en nueva pestana</a></p>
     `;
   } else {
     el.compPreviewBody.innerHTML = `
       <img src="${encodeURI(safeUrl)}" alt="Comprobante" class="comp-preview-image" />
+      <p><strong>${escapeHtml(current.id || '')}</strong> · ${escapeHtml(current.nombre || '')}</p>
       <p><a href="${encodeURI(safeUrl)}" target="_blank" rel="noreferrer noopener">Abrir imagen en nueva pestana</a></p>
     `;
+    applyPreviewImageTransform();
   }
 
   el.compPreviewModal.classList.remove('hidden');
+}
+
+function stepComprobantePreview(direction = 1) {
+  if (!state.comprobantesRows.length) return;
+  const total = state.comprobantesRows.length;
+  const next = (state.comprobantePreview.index + direction + total) % total;
+  state.comprobantePreview.index = next;
+  state.comprobantePreview.zoom = 1;
+  state.comprobantePreview.rotation = 0;
+  renderCurrentComprobantePreview();
+}
+
+function openComprobantePreview(comprobanteId) {
+  if (!el.compPreviewModal || !el.compPreviewBody) return;
+
+  const index = state.comprobantesRows.findIndex((item) => item.id === comprobanteId);
+  if (index < 0) {
+    showToast('Comprobante no encontrado', true);
+    return;
+  }
+
+  state.comprobantePreview.index = index;
+  state.comprobantePreview.zoom = 1;
+  state.comprobantePreview.rotation = 0;
+  renderCurrentComprobantePreview();
 }
 
 function renderComprobantes(rows = []) {
@@ -1081,7 +1135,7 @@ function renderComprobantes(rows = []) {
         <td><span class="status-pill ${estado === 'validado' ? 'ok' : estado === 'rechazado' ? 'error' : 'warn'}">${escapeHtml(estado)}</span></td>
         <td>
           <div class="inline-actions">
-            <button type="button" class="btn ghost" data-comp-preview="1" data-comp-path="${encodeURIComponent(item.filePath || '')}" data-comp-mime="${encodeURIComponent(item.mimeType || '')}">VER</button>
+            <button type="button" class="btn ghost" data-comp-preview-id="${escapeHtml(item.id || '')}">VER</button>
             <button type="button" class="btn success" data-comp-action="validar" data-comp-id="${escapeHtml(item.id)}">VALIDAR</button>
             <button type="button" class="btn danger" data-comp-action="rechazar" data-comp-id="${escapeHtml(item.id)}">RECHAZAR</button>
           </div>
@@ -1238,12 +1292,38 @@ el.compPreviewModal?.addEventListener('click', (event) => {
     closeComprobantePreview();
   }
 });
+el.compPreviewPrev?.addEventListener('click', () => stepComprobantePreview(-1));
+el.compPreviewNext?.addEventListener('click', () => stepComprobantePreview(1));
+el.compPreviewZoomIn?.addEventListener('click', () => {
+  state.comprobantePreview.zoom = Math.min(3, Number((state.comprobantePreview.zoom + 0.2).toFixed(2)));
+  if (!applyPreviewImageTransform()) {
+    showToast('Zoom disponible solo para imagenes', true);
+  }
+});
+el.compPreviewZoomOut?.addEventListener('click', () => {
+  state.comprobantePreview.zoom = Math.max(0.4, Number((state.comprobantePreview.zoom - 0.2).toFixed(2)));
+  if (!applyPreviewImageTransform()) {
+    showToast('Zoom disponible solo para imagenes', true);
+  }
+});
+el.compPreviewRotate?.addEventListener('click', () => {
+  state.comprobantePreview.rotation = (state.comprobantePreview.rotation + 90) % 360;
+  if (!applyPreviewImageTransform()) {
+    showToast('Rotacion disponible solo para imagenes', true);
+  }
+});
+el.compPreviewReset?.addEventListener('click', () => {
+  state.comprobantePreview.zoom = 1;
+  state.comprobantePreview.rotation = 0;
+  if (!applyPreviewImageTransform()) {
+    renderCurrentComprobantePreview();
+  }
+});
 el.comprobantes?.addEventListener('click', async (event) => {
-  const preview = event.target.closest('[data-comp-preview]');
+  const preview = event.target.closest('[data-comp-preview-id]');
   if (preview) {
-    const path = decodeURIComponent(preview.getAttribute('data-comp-path') || '');
-    const mime = decodeURIComponent(preview.getAttribute('data-comp-mime') || '');
-    openComprobantePreview(path, mime);
+    const comprobanteId = preview.getAttribute('data-comp-preview-id') || '';
+    openComprobantePreview(comprobanteId);
     return;
   }
 
