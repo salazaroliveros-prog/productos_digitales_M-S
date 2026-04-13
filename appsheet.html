@@ -38,38 +38,56 @@
             <th>Entradas</th>
             <th>Salidas</th>
             <th>Balance actual</th>
+            <th>Stock Mínimo</th>
+            <th>Estado</th>
           </tr>
         </thead>
         <tbody>
-          <tr data-inicial="50">
+          <tr data-inicial="50" data-minimo="15">
             <td>Block 50kg</td>
             <td>50.00</td>
             <td><input type="number" step="0.01" value="0" data-col="entrada" title="Entradas de Block" placeholder="0" /></td>
             <td><input type="number" step="0.01" value="0" data-col="salida" title="Salidas de Block" placeholder="0" /></td>
             <td data-col="balance">50.00</td>
+            <td class="stock-minimo-cell">15</td>
+            <td data-col="alerta" class="alerta-ok">✅ OK</td>
           </tr>
-          <tr data-inicial="1200">
+          <tr data-inicial="1200" data-minimo="200">
             <td>Cemento UGC</td>
             <td>1200.00</td>
             <td><input type="number" step="0.01" value="0" data-col="entrada" title="Entradas de Cemento" placeholder="0" /></td>
             <td><input type="number" step="0.01" value="0" data-col="salida" title="Salidas de Cemento" placeholder="0" /></td>
             <td data-col="balance">1200.00</td>
+            <td class="stock-minimo-cell">200</td>
+            <td data-col="alerta" class="alerta-ok">✅ OK</td>
           </tr>
-          <tr data-inicial="85">
+          <tr data-inicial="85" data-minimo="20">
             <td>Hierro 3/8</td>
             <td>85.00</td>
             <td><input type="number" step="0.01" value="0" data-col="entrada" title="Entradas de Hierro" placeholder="0" /></td>
             <td><input type="number" step="0.01" value="0" data-col="salida" title="Salidas de Hierro" placeholder="0" /></td>
             <td data-col="balance">85.00</td>
+            <td class="stock-minimo-cell">20</td>
+            <td data-col="alerta" class="alerta-ok">✅ OK</td>
           </tr>
         </tbody>
       </table>
 
+      <section class="avance-obra">
+        <h3>Avance de obra — CASA COLONIAL 120m2</h3>
+        <div class="avance-bar-wrapper">
+          <div id="avance-bar" class="avance-bar avance-bar-zero"></div>
+        </div>
+        <p id="avance-label">Salidas acumuladas: 0 / 1335 unidades (0%)</p>
+        <p class="formula-hint"><strong>Formula AppSheet:</strong> SUM(SELECT(Entradas[Cantidad],[ID_Proyecto]=[_THISROW].[ID_Proyecto])) / [Cantidad_Estimada_Planos]</p>
+      </section>
+
       <section class="appsheet-formulas">
         <h3>Formulas sugeridas en AppSheet</h3>
         <p><strong>Balance Actual:</strong> SUM([Entradas]) - SUM([Salidas])</p>
-        <p><strong>Alerta de Stock Bajo:</strong> IF([Balance Actual] &lt; 10, "⚠️ LOW", "✅ OK")</p>
-        <p><strong>Filtro de Diseno:</strong> SELECT(Precios_Materiales[Costo], [ID_Material] = [_THISROW].[ID_Material])</p>
+        <p><strong>Alerta de Stock Bajo:</strong> IF([Balance Actual] &lt; [Stock_Minimo], "⚠️ BAJO", "✅ OK")</p>
+        <p><strong>Avance por proyecto:</strong> SUM(SELECT(Entradas[Cantidad],[ID_Proyecto]=[_THISROW].[ID_Proyecto])) / [Cantidad_Estimada_Planos]</p>
+        <p><strong>Filtro de precio:</strong> SELECT(Precios_Materiales[Costo], [ID_Material] = [_THISROW].[ID_Material])</p>
       </section>
     </section>
   </main>

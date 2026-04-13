@@ -335,18 +335,42 @@ function setupAppSheetScreen() {
   if (!table) return;
 
   const rows = Array.from(table.querySelectorAll('tbody tr'));
+  const avanceBar = getById('avance-bar');
+  const avanceLabel = getById('avance-label');
+
+  const totalInicial = rows.reduce((sum, row) => sum + Number(row.getAttribute('data-inicial') || 0), 0);
+
+  function updateAvance() {
+    if (!avanceBar || !avanceLabel) return;
+    const totalSalidas = rows.reduce((sum, row) => {
+      const salida = row.querySelector('[data-col="salida"]');
+      return sum + Number(salida?.value || 0);
+    }, 0);
+    const pct = totalInicial > 0 ? Math.min(100, Math.round((totalSalidas / totalInicial) * 100)) : 0;
+    avanceBar.style.width = `${pct}%`;
+    avanceLabel.textContent = `Salidas acumuladas: ${totalSalidas.toFixed(0)} / ${totalInicial} unidades (${pct}%)`;
+  }
+
   rows.forEach((row) => {
     const inicial = Number(row.getAttribute('data-inicial') || 0);
+    const minimo = Number(row.getAttribute('data-minimo') || inicial * 0.3);
     const entrada = row.querySelector('[data-col="entrada"]');
     const salida = row.querySelector('[data-col="salida"]');
     const balance = row.querySelector('[data-col="balance"]');
+    const alerta = row.querySelector('[data-col="alerta"]');
 
     const recalc = () => {
       const inValue = Number(entrada.value || 0);
       const outValue = Number(salida.value || 0);
       const current = inicial + inValue - outValue;
       balance.textContent = current.toFixed(2);
-      row.classList.toggle('row-low', current <= inicial * 0.3);
+      const isLow = current <= minimo;
+      row.classList.toggle('row-low', isLow);
+      if (alerta) {
+        alerta.textContent = isLow ? '⚠️ BAJO' : '✅ OK';
+        alerta.className = isLow ? 'alerta-low' : 'alerta-ok';
+      }
+      updateAvance();
     };
 
     entrada.addEventListener('input', recalc);

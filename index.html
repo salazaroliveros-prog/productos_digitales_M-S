@@ -11,6 +11,8 @@
         .btn-wm { background-color: var(--wm-orange); color: white; font-weight: bold; border-radius: 25px; }
         .price-tag { color: var(--wm-navy); font-size: 1.5rem; font-weight: 800; }
         .title-navy { color: var(--wm-navy); }
+        #m2Slider { accent-color: var(--wm-orange); background: #e2e8f0; border-radius: 6px; height: 8px; cursor: pointer; }
+        .slider-wrapper { background: #1a2a3a14; border-radius: 10px; padding: 0.6rem 0.75rem; }
     </style>
 </head>
 <body class="bg-light" data-screen="vitrina-bootstrap">
@@ -26,7 +28,9 @@
             <hr>
 
             <label class="form-label">Ajustar area: <b id="areaLabel">120</b> m2</label>
-            <input type="range" class="form-range" id="m2Slider" min="50" max="400" value="120" step="10" title="Ajustar area de construccion">
+            <div class="slider-wrapper">
+              <input type="range" class="form-range" id="m2Slider" min="50" max="400" value="120" step="10" title="Ajustar area de construccion">
+            </div>
 
             <div class="row mt-3 text-center">
                 <div class="col-6 border-end">

@@ -981,6 +981,16 @@ textarea {
   color: #b91c1c;
 }
 
+.btn-sm {
+  padding: 0.32rem 0.5rem;
+  font-size: 0.68rem;
+}
+
+.table-muted {
+  color: #7c8b99;
+  font-size: 0.74rem;
+}
+
 .toast {
   position: fixed;
   right: 14px;
@@ -1826,6 +1836,63 @@ body[data-flow-screen='dashboard'] .laptop-shell {
 
 #appsheet-table tr.row-low {
   background: rgba(255, 102, 0, 0.08);
+}
+
+.stock-minimo-cell {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+td.alerta-ok {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+td.alerta-low {
+  color: #ea580c;
+  font-weight: 600;
+}
+
+.avance-obra {
+  margin-top: 1.25rem;
+  padding: 0.85rem;
+  border: 1px solid #d3dbe6;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.avance-obra h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+}
+
+.avance-bar-wrapper {
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.avance-bar {
+  height: 100%;
+  background: #1d4ed8;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.avance-bar-zero {
+  width: 0%;
+}
+
+.avance-obra p {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.formula-hint {
+  color: #334155;
+  margin-top: 0.5rem !important;
 }
 
 body[data-flow-screen='appsheet'] #appsheet-table td {

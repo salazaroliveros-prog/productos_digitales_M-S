@@ -1,6 +1,7 @@
 const state = {
   session: null,
   inventarioRows: [],
+  accessRows: [],
   comprobantesRows: [],
   comprobantePreview: {
     index: -1,
@@ -73,6 +74,11 @@ const el = {
   historialSummary: document.getElementById('historial-summary'),
   historialTable: document.getElementById('historial-table'),
   historial: document.getElementById('admin-historial'),
+  accessVentaId: document.getElementById('access-venta-id'),
+  accessEstado: document.getElementById('access-estado'),
+  accessFiltrar: document.getElementById('access-filtrar'),
+  accessSummary: document.getElementById('access-summary'),
+  accessTable: document.getElementById('access-table'),
   smtpStatus: document.getElementById('smtp-status'),
   smtpSummary: document.getElementById('smtp-summary'),
   smtpTable: document.getElementById('smtp-table'),
@@ -699,6 +705,72 @@ function renderHistorial(rows = []) {
   `;
 }
 
+function normalizeAccessEstado(row = {}) {
+  if (row.revocado) return 'revocado';
+  if (row.usado) return 'usado';
+  return 'activo';
+}
+
+function renderAccessRows(rows = []) {
+  if (el.accessSummary) {
+    const activos = rows.filter((row) => normalizeAccessEstado(row) === 'activo').length;
+    const usados = rows.filter((row) => normalizeAccessEstado(row) === 'usado').length;
+    const revocados = rows.filter((row) => normalizeAccessEstado(row) === 'revocado').length;
+
+    el.accessSummary.innerHTML = [
+      { label: 'Tokens listados', value: rows.length },
+      { label: 'Activos', value: activos },
+      { label: 'Usados', value: usados },
+      { label: 'Revocados', value: revocados },
+    ]
+      .map(
+        (item) => `
+        <article class="metric">
+          <h4>${item.label}</h4>
+          <p>${escapeHtml(item.value)}</p>
+        </article>
+      `
+      )
+      .join('');
+  }
+
+  if (!el.accessTable) return;
+
+  if (!rows.length) {
+    el.accessTable.innerHTML = '<p>No hay accesos para el filtro actual.</p>';
+    return;
+  }
+
+  const body = rows
+    .map((row) => {
+      const estado = normalizeAccessEstado(row);
+      const canRevoke = estado === 'activo';
+      const maskedJti = row.jti ? `${row.jti.slice(0, 8)}...` : '-';
+      return `
+      <tr>
+        <td>${escapeHtml(formatDateTime(row.createdAt))}</td>
+        <td>${escapeHtml(row.ventaId || '-')}</td>
+        <td>${escapeHtml(row.disenoId || '-')}</td>
+        <td>${escapeHtml(row.clienteEmail || '-')}</td>
+        <td>${escapeHtml(maskedJti)}</td>
+        <td>${escapeHtml(formatDateTime(row.expiresAt))}</td>
+        <td><span class="status-pill ${estado === 'activo' ? 'ok' : estado === 'revocado' ? 'error' : 'warn'}">${escapeHtml(estado)}</span></td>
+        <td>${canRevoke ? `<button type="button" class="btn danger btn-sm" data-access-revoke="${escapeHtml(row.jti || '')}" data-access-venta="${escapeHtml(row.ventaId || '')}">REVOCAR</button>` : '<span class="table-muted">Sin accion</span>'}</td>
+      </tr>
+    `;
+    })
+    .join('');
+
+  el.accessTable.innerHTML = `
+    <table class="admin-table">
+      <thead>
+        <tr><th>Creado</th><th>Venta</th><th>Diseno</th><th>Email</th><th>JTI</th><th>Expira</th><th>Estado</th><th>Accion</th></tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>
+  `;
+}
+
 function refreshHistorialView() {
   renderHistorial(getFilteredHistorialRows());
 }
@@ -1206,6 +1278,28 @@ async function loadHistorial() {
   el.historial.textContent = JSON.stringify(historial.slice(0, 30), null, 2);
 }
 
+async function loadAccessRows() {
+  const ventaId = String(el.accessVentaId?.value || '').trim();
+  const estado = String(el.accessEstado?.value || '').trim();
+  const query = new URLSearchParams();
+  if (ventaId) query.set('ventaId', ventaId);
+  if (estado) query.set('estado', estado);
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  const rows = await adminRequest(`/api/admin/accesos${suffix}`);
+  state.accessRows = Array.isArray(rows) ? rows : [];
+  renderAccessRows(state.accessRows);
+  return state.accessRows;
+}
+
+async function revokeAccessToken(ventaId, jti) {
+  await adminRequest('/api/admin/accesos/revocar', {
+    method: 'PATCH',
+    body: JSON.stringify({ ventaId, jti }),
+  });
+  await loadAccessRows();
+  showToast(`Acceso revocado para ${ventaId}`);
+}
+
 async function loadSmtpStatus() {
   const status = await adminRequest('/api/integracion/appsheet/smtp-status');
   renderSmtpStatus(status);
@@ -1238,6 +1332,7 @@ async function connectAdmin() {
       loadLeads(),
       loadComprobantes(),
       loadHistorial(),
+      loadAccessRows(),
       loadPaquetes(),
       loadSmtpStatus(),
     ]);
@@ -1403,6 +1498,33 @@ el.histExport.addEventListener('click', () => {
     link.click();
     link.remove();
     showToast(`CSV exportado (${rows.length} registros)`);
+  } catch (error) {
+    showToast(error.message, true);
+  }
+});
+
+el.accessFiltrar?.addEventListener('click', async () => {
+  try {
+    await loadAccessRows();
+  } catch (error) {
+    showToast(error.message, true);
+  }
+});
+
+el.accessTable?.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-access-revoke]');
+  if (!button) return;
+
+  const ventaId = String(button.getAttribute('data-access-venta') || '').trim();
+  const jti = String(button.getAttribute('data-access-revoke') || '').trim();
+  if (!ventaId || !jti) return;
+
+  if (!confirm(`Revocar token activo para ${ventaId}?`)) {
+    return;
+  }
+
+  try {
+    await revokeAccessToken(ventaId, jti);
   } catch (error) {
     showToast(error.message, true);
   }

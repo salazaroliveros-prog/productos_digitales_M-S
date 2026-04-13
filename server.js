@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3007;
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
 const DELIVERABLES_DIR = path.join(ROOT, 'deliverables');
-const AUTH_SECRET = process.env.AUTH_SECRET || 'wmms-local-secret';
+const AUTH_SECRET = String(process.env.AUTH_SECRET || '');
 const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || 'wmms-admin').trim().toLowerCase();
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || '');
 const ADMIN_SESSION_COOKIE = 'wmms_admin_session';
@@ -74,6 +74,10 @@ let runtimeProvider = DB_PROVIDER === 'mongo' ? 'mongo' : 'json';
 let mongoClient = null;
 let mongoDb = null;
 let smtpTransporter = null;
+
+if (!AUTH_SECRET || AUTH_SECRET === 'wmms-local-secret' || AUTH_SECRET.length < 32) {
+  throw new Error('AUTH_SECRET debe configurarse con un valor aleatorio de al menos 32 caracteres');
+}
 
 class ApiError extends Error {
   constructor(statusCode, message) {
@@ -259,33 +263,46 @@ function safeFilename(name = '') {
     .slice(0, 120);
 }
 
-function generateDeliverableToken(ventaId, archivo) {
+function createSignedTokenPayload(data = {}, ttlMs = 0) {
   const payload = {
-    ventaId,
-    archivo,
+    ...data,
+    jti: crypto.randomBytes(16).toString('base64url'),
     timestamp: Date.now(),
-    ttl: ACCESS_TOKEN_TTL_MINUTES * 60 * 1000,
+    ttl: ttlMs,
   };
-  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const signature = tokenHash(encoded);
+  const encoded = toBase64Url(JSON.stringify(payload));
+  const signature = signPayload(encoded);
   return `${encoded}.${signature}`;
 }
 
-function verifyDeliverableToken(token, ventaId) {
+function verifySignedTokenPayload(token) {
   if (!token || !token.includes('.')) return null;
   const [encoded, signature] = token.split('.');
-  const expectedSignature = tokenHash(encoded);
+  const expectedSignature = signPayload(encoded);
   if (!safeCompareString(signature, expectedSignature)) return null;
 
   try {
-    const payload = JSON.parse(Buffer.from(encoded, 'base64').toString());
+    const payload = JSON.parse(fromBase64Url(encoded));
     const now = Date.now();
-    if (now > payload.timestamp + payload.ttl) return null; // Token expired
-    if (ventaId && payload.ventaId !== ventaId) return null; // Venta mismatch
+    if (now > payload.timestamp + payload.ttl) return null;
     return payload;
   } catch {
     return null;
   }
+}
+
+function generateDeliverableToken(ventaId, archivo) {
+  return createSignedTokenPayload({
+    ventaId,
+    archivo,
+  }, ACCESS_TOKEN_TTL_MINUTES * 60 * 1000);
+}
+
+function verifyDeliverableToken(token, ventaId) {
+  const payload = verifySignedTokenPayload(token);
+  if (!payload) return null;
+  if (ventaId && payload.ventaId !== ventaId) return null;
+  return payload;
 }
 
 function mimeTypeForFile(filePath) {
@@ -309,30 +326,13 @@ function getAllDeliverableFiles(ventaId) {
 }
 
 function generatePasswordResetToken(email) {
-  const payload = {
+  return createSignedTokenPayload({
     email,
-    timestamp: Date.now(),
-    ttl: PASSWORD_RESET_TTL_MINUTES * 60 * 1000,
-  };
-  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const signature = tokenHash(encoded);
-  return `${encoded}.${signature}`;
+  }, PASSWORD_RESET_TTL_MINUTES * 60 * 1000);
 }
 
 function verifyPasswordResetToken(token) {
-  if (!token || !token.includes('.')) return null;
-  const [encoded, signature] = token.split('.');
-  const expectedSignature = tokenHash(encoded);
-  if (!safeCompareString(signature, expectedSignature)) return null;
-
-  try {
-    const payload = JSON.parse(Buffer.from(encoded, 'base64').toString());
-    const now = Date.now();
-    if (now > payload.timestamp + payload.ttl) return null; // Token expired
-    return payload;
-  } catch {
-    return null;
-  }
+  return verifySignedTokenPayload(token);
 }
 
 async function cleanExpiredPasswordResets() {
@@ -1031,17 +1031,28 @@ async function getCredencialesHistorialRows(query) {
 }
 
 async function createDeliveryAccessToken(venta, scope = 'descarga-premium') {
-  const token = crypto.randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + ACCESS_TOKEN_TTL_MINUTES * 60 * 1000).toISOString();
+  const token = createSignedTokenPayload(
+    {
+      ventaId: venta.id,
+      disenoId: venta.disenoId || '',
+      clienteEmail: normalizeEmail(venta.clienteEmail || ''),
+      scope,
+    },
+    ACCESS_TOKEN_TTL_MINUTES * 60 * 1000
+  );
+  const tokenPayload = verifySignedTokenPayload(token);
   const accesos = await readCollection('accesos', []);
   const registro = {
     id: `ACC-${Date.now()}`,
+    jti: tokenPayload?.jti || '',
     tokenHash: tokenHash(token),
     ventaId: venta.id,
     disenoId: venta.disenoId || '',
     clienteEmail: normalizeEmail(venta.clienteEmail || ''),
     scope,
     usado: false,
+    revocado: false,
     createdAt: new Date().toISOString(),
     expiresAt,
   };
@@ -1062,10 +1073,23 @@ async function resolveAccessToken(rawToken) {
     throw new ApiError(400, 'Token requerido');
   }
 
+  const tokenPayload = verifySignedTokenPayload(clean);
+  if (!tokenPayload?.jti) {
+    throw new ApiError(401, 'Token de acceso invalido');
+  }
+
   const accesos = await readCollection('accesos', []);
   const hash = tokenHash(clean);
-  const registro = accesos.find((item) => item.tokenHash === hash);
+  const registro = accesos.find((item) => item.jti === tokenPayload.jti);
   if (!registro) {
+    throw new ApiError(401, 'Token de acceso invalido');
+  }
+
+  if (registro.revocado) {
+    throw new ApiError(401, 'Token revocado');
+  }
+
+  if (!safeCompareString(registro.tokenHash, hash)) {
     throw new ApiError(401, 'Token de acceso invalido');
   }
 
@@ -1078,7 +1102,7 @@ async function resolveAccessToken(rawToken) {
     throw new ApiError(401, 'Token ya utilizado');
   }
 
-  return { registro, accesos };
+  return { registro, accesos, tokenPayload };
 }
 
 async function consumeAccessToken(registro, accesos) {
@@ -1094,6 +1118,38 @@ async function consumeAccessToken(registro, accesos) {
   target.usado = true;
   target.usedAt = new Date().toISOString();
   await writeCollection('accesos', accesos);
+}
+
+async function getAdminAccessRows(query = null) {
+  const ventaId = String(query?.get('ventaId') || '').trim();
+  const estado = String(query?.get('estado') || '').trim().toLowerCase();
+  const accesos = await readCollection('accesos', []);
+
+  return accesos
+    .filter((item) => {
+      if (!item.ventaId) return false;
+      if (ventaId && item.ventaId !== ventaId) return false;
+      if (estado === 'activo') return !item.usado && !item.revocado;
+      if (estado === 'usado') return Boolean(item.usado) && !item.revocado;
+      if (estado === 'revocado') return Boolean(item.revocado);
+      return true;
+    })
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+    .slice(0, 200)
+    .map((item) => ({
+      id: item.id,
+      jti: item.jti || '',
+      ventaId: item.ventaId,
+      disenoId: item.disenoId || '',
+      clienteEmail: item.clienteEmail || '',
+      scope: item.scope || '',
+      createdAt: item.createdAt || '',
+      expiresAt: item.expiresAt || '',
+      usado: Boolean(item.usado),
+      usedAt: item.usedAt || '',
+      revocado: Boolean(item.revocado),
+      revocadoEn: item.revocadoEn || '',
+    }));
 }
 
 async function registrarNotificacionEntrega(venta) {
@@ -2038,6 +2094,56 @@ async function routeApi(req, res, url) {
     return true;
   }
 
+  if (req.method === 'GET' && pathname === '/api/admin/accesos') {
+    const session = getAdminSession(req);
+    if (!session) {
+      throw new ApiError(401, 'Sesion administrativa no valida');
+    }
+
+    sendJson(res, 200, await getAdminAccessRows(query));
+    return true;
+  }
+
+  if (req.method === 'PATCH' && pathname === '/api/admin/accesos/revocar') {
+    const session = getAdminSession(req);
+    if (!session) {
+      throw new ApiError(401, 'Sesion administrativa no valida');
+    }
+
+    const body = await parseBody(req);
+    const ventaId = String(body.ventaId || '').trim();
+    const targetJti = String(body.jti || '').trim();
+    if (!ventaId) {
+      throw new ApiError(400, 'ventaId requerido');
+    }
+
+    const accesos = await readCollection('accesos', []);
+    let tokensRevocados = 0;
+    accesos.forEach((acc) => {
+      const belongsToVenta = acc.ventaId === ventaId;
+      const matchesJti = !targetJti || acc.jti === targetJti;
+      if (belongsToVenta && matchesJti && !acc.revocado) {
+        acc.revocado = true;
+        acc.revocadoEn = new Date().toISOString();
+        if (!acc.usado) {
+          acc.usado = true;
+          acc.usedAt = acc.revocadoEn;
+        }
+        tokensRevocados++;
+      }
+    });
+
+    await writeCollection('accesos', accesos);
+    sendJson(res, 200, {
+      ok: true,
+      ventaId,
+      jti: targetJti || null,
+      tokensRevocados,
+      revocadoPor: session.username,
+    });
+    return true;
+  }
+
   if (req.method === 'POST' && pathname === '/api/auth/login') {
     const body = await parseBody(req);
     const email = normalizeEmail(body.email);
@@ -2917,6 +3023,8 @@ CONSTRUCTORA WM/M&S
     checkIntegrationKey(req);
     const parts = pathname.split('/').filter(Boolean);
     const ventaId = parts[4];
+    const body = await parseBody(req);
+    const targetJti = String(body.jti || '').trim();
     if (!ventaId) {
       throw new ApiError(400, 'ventaId requerido');
     }
@@ -2935,8 +3043,11 @@ CONSTRUCTORA WM/M&S
     const accesos = await readCollection('accesos', []);
     let tokensRevocados = 0;
     accesos.forEach((acc) => {
-      if (acc.ventaId === ventaId && !acc.usado) {
+      const belongsToVenta = acc.ventaId === ventaId;
+      const matchesJti = !targetJti || acc.jti === targetJti;
+      if (belongsToVenta && matchesJti && !acc.usado && !acc.revocado) {
         acc.usado = true;
+        acc.revocado = true;
         acc.revocadoEn = new Date().toISOString();
         tokensRevocados++;
       }
@@ -2950,6 +3061,7 @@ CONSTRUCTORA WM/M&S
     sendJson(res, 200, {
       ok: true,
       ventaId,
+      jti: targetJti || null,
       accesoApp: false,
       enlaceEntrega: '',
       tokensRevocados,

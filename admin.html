@@ -142,6 +142,17 @@
       <div id="historial-table"></div>
       <pre id="admin-historial"></pre>
     </section>
+
+    <section class="section admin-private hidden">
+      <h2>Accesos de entrega</h2>
+      <div class="inline-form">
+        <div class="field"><label for="access-venta-id">Venta ID</label><input id="access-venta-id" placeholder="VEN-001" /></div>
+        <div class="field"><label for="access-estado">Estado</label><select id="access-estado"><option value="">Todos</option><option value="activo">Activos</option><option value="usado">Usados</option><option value="revocado">Revocados</option></select></div>
+        <button id="access-filtrar" type="button" class="btn ghost">Filtrar</button>
+      </div>
+      <div id="access-summary" class="dashboard-grid admin-gap-top"></div>
+      <div id="access-table"></div>
+    </section>
   </main>
 
   <div id="comp-preview-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="comp-preview-title">
