@@ -28,6 +28,31 @@
                     <button type="button" id="logout-btn" class="btn ghost">Salir</button>
                 </form>
                 <p id="access-status" class="access-status">Modo publico: solo contenido abierto.</p>
+
+                <form id="register-form" class="form-card">
+                    <h3>Registro rapido de cliente</h3>
+                    <div class="field">
+                        <label for="register-nombre">Nombre</label>
+                        <input id="register-nombre" name="nombre" required />
+                    </div>
+                    <div class="field">
+                        <label for="register-email">Email</label>
+                        <input id="register-email" name="email" type="email" required />
+                    </div>
+                    <div class="field">
+                        <label for="register-telefono">Telefono / WhatsApp</label>
+                        <input id="register-telefono" name="telefono" />
+                    </div>
+                    <div class="field">
+                        <label for="register-interes">Interes</label>
+                        <select id="register-interes" name="interes">
+                            <option>Disenos y planos</option>
+                            <option>Software y apps</option>
+                            <option>Consultoria</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn primary">Registrarme</button>
+                </form>
             </div>
         </section>
 

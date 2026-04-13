@@ -1250,6 +1250,66 @@ async function routeApi(req, res, url) {
     return true;
   }
 
+  if (req.method === 'POST' && pathname === '/api/auth/registro') {
+    const body = await parseBody(req);
+    const email = normalizeEmail(body.email);
+    if (!email) {
+      throw new ApiError(400, 'Email requerido');
+    }
+
+    const perfil = await getClientProfile(email);
+    if (perfil.isAutenticado) {
+      const token = buildToken(email);
+      sendJson(res, 200, {
+        ok: true,
+        registro: 'cliente-existente',
+        mensaje: 'Este correo ya tiene una cuenta activa. Se inicio sesion automaticamente.',
+        token,
+        cliente: {
+          email: perfil.email,
+          nivelAcceso: perfil.nivelAcceso,
+          comprasPagadas: perfil.comprasPagadas.map((venta) => venta.disenoId),
+          comprasPendientes: perfil.comprasPendientes.map((venta) => venta.disenoId),
+        },
+      });
+      return true;
+    }
+
+    const leads = await readCollection('leads', []);
+    const existeLead = leads.find((item) => normalizeEmail(item.email) === email);
+    if (existeLead) {
+      existeLead.nombre = body.nombre || existeLead.nombre || 'Cliente';
+      existeLead.telefono = body.telefono || existeLead.telefono || '';
+      existeLead.canal = body.canal || existeLead.canal || 'Web Registro';
+      existeLead.interes = body.interes || existeLead.interes || 'Catalogo digital';
+      existeLead.mensaje = body.mensaje || existeLead.mensaje || 'Registro cliente publico';
+      existeLead.estado = 'pre-registro';
+      existeLead.actualizadoEn = new Date().toISOString();
+    } else {
+      leads.push({
+        id: `LEAD-${Date.now()}`,
+        fecha: new Date().toISOString(),
+        nombre: body.nombre || 'Cliente',
+        email,
+        telefono: body.telefono || '',
+        canal: body.canal || 'Web Registro',
+        interes: body.interes || 'Catalogo digital',
+        mensaje: body.mensaje || 'Registro cliente publico',
+        estado: 'pre-registro',
+      });
+    }
+
+    await writeCollection('leads', leads);
+    sendJson(res, 201, {
+      ok: true,
+      registro: 'lead-creado',
+      email,
+      mensaje:
+        'Registro recibido. Ya puedes ver productos publicos. El acceso premium se activa cuando tu compra quede pagada.',
+    });
+    return true;
+  }
+
   if (req.method === 'GET' && pathname === '/api/auth/me') {
     if (!authContext.tokenValido) {
       sendJson(res, 401, { error: 'Token invalido o expirado' });
@@ -1365,6 +1425,7 @@ async function routeApi(req, res, url) {
       id: `LEAD-${Date.now()}`,
       fecha: new Date().toISOString(),
       nombre: body.nombre || 'Sin nombre',
+      email: normalizeEmail(body.email || ''),
       telefono: body.telefono || '',
       canal: body.canal || 'WhatsApp',
       interes: body.interes || 'General',

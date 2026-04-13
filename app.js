@@ -22,6 +22,7 @@ const el = {
   ventaForm: document.getElementById('venta-form'),
   ventaDiseno: document.getElementById('venta-diseno'),
   accessForm: document.getElementById('access-form'),
+  registerForm: document.getElementById('register-form'),
   accessStatus: document.getElementById('access-status'),
   logoutBtn: document.getElementById('logout-btn'),
   toast: document.getElementById('toast'),
@@ -328,6 +329,38 @@ function bindForms() {
       });
       await loadDisenos();
       showToast(`Sesion iniciada para ${login.cliente.email}`);
+    } catch (error) {
+      showToast(`${error.message}. Si aun no tienes cuenta, usa el registro rapido.`, true);
+    }
+  });
+
+  el.registerForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(el.registerForm);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      const registro = await request('/api/auth/registro', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (registro.token && registro.cliente) {
+        setClientSession(registro.token, {
+          email: registro.cliente.email,
+          nivelAcceso: registro.cliente.nivelAcceso,
+          comprasPagadas: registro.cliente.comprasPagadas,
+        });
+        await loadDisenos();
+        showToast('Cliente existente detectado. Sesion iniciada automaticamente.');
+        return;
+      }
+
+      const accessEmail = document.getElementById('access-email');
+      accessEmail.value = payload.email || '';
+      el.registerForm.reset();
+      await loadDashboard();
+      showToast(registro.mensaje || 'Registro guardado. Puedes continuar con productos publicos.');
     } catch (error) {
       showToast(error.message, true);
     }
