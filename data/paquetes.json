@@ -1,0 +1,28 @@
+[
+  {
+    "id": "PAQ-START",
+    "nombre": "Paquete Constructor Start",
+    "descripcion": "Plano base + ERP para iniciar operaciones comerciales.",
+    "items": [
+      { "disenoId": "DIS-001", "cantidad": 1 },
+      { "disenoId": "APP-001", "cantidad": 1 }
+    ],
+    "descuentoPct": 10,
+    "activo": true,
+    "estrategia": "cross-sell",
+    "actualizadoEn": "2026-04-12T00:00:00.000Z"
+  },
+  {
+    "id": "PAQ-PREMIUM",
+    "nombre": "Paquete Constructor Premium",
+    "descripcion": "Plano premium + ERP + bundle de valor alto para maximizar utilidad.",
+    "items": [
+      { "disenoId": "DIS-002", "cantidad": 1 },
+      { "disenoId": "APP-001", "cantidad": 1 }
+    ],
+    "descuentoPct": 7.5,
+    "activo": true,
+    "estrategia": "upsell",
+    "actualizadoEn": "2026-04-12T00:00:00.000Z"
+  }
+]

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CONSTRUCTORA WM/M&S - Plataforma Comercial</title>
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+    <header class="hero">
+        <div class="container brand">
+            <h1>CONSTRUCTORA WM/M&S</h1>
+            <p>CONSTRUYENDO EL FUTURO</p>
+            <p><a class="btn ghost" href="./admin.html">Abrir Back-Office</a></p>
+        </div>
+    </header>
+
+    <main class="container grid">
+        <section class="section">
+            <h2>Acceso cliente</h2>
+            <div class="access-panel">
+                <form id="access-form" class="inline-form">
+                    <div class="field">
+                        <label for="access-email">Email del cliente</label>
+                        <input id="access-email" name="email" type="email" placeholder="cliente@correo.com" required />
+                    </div>
+                    <button type="submit" class="btn primary">Ingresar</button>
+                    <button type="button" id="logout-btn" class="btn ghost">Salir</button>
+                </form>
+                <p id="access-status" class="access-status">Modo publico: solo contenido abierto.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Catalogo de productos y servicios</h2>
+            <div id="catalogo-grid" class="catalog-grid"></div>
+        </section>
+
+        <section class="section">
+            <h2>Control comercial y captura</h2>
+            <div class="forms">
+                <form id="lead-form" class="form-card">
+                    <h3>Nuevo lead</h3>
+                    <div class="field">
+                        <label for="lead-nombre">Nombre</label>
+                        <input id="lead-nombre" name="nombre" required />
+                    </div>
+                    <div class="field">
+                        <label for="lead-telefono">Telefono / WhatsApp</label>
+                        <input id="lead-telefono" name="telefono" required />
+                    </div>
+                    <div class="field">
+                        <label for="lead-canal">Canal</label>
+                        <select id="lead-canal" name="canal">
+                            <option>Marketplace</option>
+                            <option>WhatsApp</option>
+                            <option>LinkedIn</option>
+                            <option>Instagram</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="lead-interes">Interes</label>
+                        <select id="lead-interes" name="interes">
+                            <option>Disenos y planos</option>
+                            <option>Software y apps</option>
+                            <option>Consultoria</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="lead-mensaje">Mensaje</label>
+                        <textarea id="lead-mensaje" name="mensaje" placeholder="Detalle del requerimiento"></textarea>
+                    </div>
+                    <button type="submit" class="btn primary">Guardar lead</button>
+                </form>
+
+                <form id="venta-form" class="form-card">
+                    <h3>Registrar venta</h3>
+                    <div class="field">
+                        <label for="venta-cliente">Cliente</label>
+                        <input id="venta-cliente" name="clienteNombre" required />
+                    </div>
+                    <div class="field">
+                        <label for="venta-email">Email</label>
+                        <input id="venta-email" name="clienteEmail" type="email" />
+                    </div>
+                    <div class="field">
+                        <label for="venta-diseno">Producto</label>
+                        <select id="venta-diseno" name="disenoId" required>
+                            <option value="">Selecciona un producto</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="venta-canal">Canal</label>
+                        <select id="venta-canal" name="canal">
+                            <option>Marketplace</option>
+                            <option>WhatsApp</option>
+                            <option>LinkedIn</option>
+                            <option>Instagram</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="venta-monto">Monto (GTQ)</label>
+                        <input id="venta-monto" name="monto" type="number" step="0.01" placeholder="Si lo dejas vacio usa cotizacion" />
+                    </div>
+                    <div class="field">
+                        <label for="venta-pago">Estado pago</label>
+                        <select id="venta-pago" name="estadoPago">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="pagado">Pagado</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="venta-entrega">Enlace entrega</label>
+                        <input id="venta-entrega" name="enlaceEntrega" placeholder="Link drive / acceso app" />
+                    </div>
+                    <button type="submit" class="btn primary">Guardar venta</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Dashboard ejecutivo</h2>
+            <div id="dashboard-grid" class="dashboard-grid"></div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        CONSTRUCTORA WM/M&S · CONSTRUYENDO EL FUTURO
+    </footer>
+
+    <div id="toast" class="toast"></div>
+    <script src="./app.js"></script>
+</body>
+</html>

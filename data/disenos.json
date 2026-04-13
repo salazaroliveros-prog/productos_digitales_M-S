@@ -1,0 +1,73 @@
+[
+  {
+    "id": "DIS-001",
+    "nombre": "Sala de Billar Urbano",
+    "categoria": "Diseno Arq",
+    "dimensiones": "4.25m x 18m",
+    "areaBaseM2": 76.5,
+    "estilo": "Urbano",
+    "descripcion": "Diseno premium con area social y enfoque en entretenimiento.",
+    "nivelAcceso": "publico",
+    "incluye": [
+      "Planos arquitectonicos",
+      "Instalaciones electricas e hidraulicas",
+      "Presupuesto base",
+      "Cuantificacion inicial"
+    ],
+    "insumos": [
+      { "materialId": "MAT-01", "rendimiento": 0.45 },
+      { "materialId": "MAT-02", "rendimiento": 0.85 },
+      { "materialId": "MAT-03", "rendimiento": 12 },
+      { "materialId": "MAT-04", "rendimiento": 0.18 },
+      { "materialId": "MAT-05", "rendimiento": 1.05 }
+    ],
+    "precioKit": 1850,
+    "canales": ["Marketplace", "WhatsApp", "Instagram"]
+  },
+  {
+    "id": "DIS-002",
+    "nombre": "Casa Colonial 10x20",
+    "categoria": "Diseno Arq",
+    "dimensiones": "10m x 20m",
+    "areaBaseM2": 120,
+    "estilo": "Colonial",
+    "descripcion": "Diseno elegante, ideal para lotes medianos y acabados premium.",
+    "nivelAcceso": "premium",
+    "incluye": [
+      "Planos completos",
+      "Detalles tecnicos",
+      "Presupuesto por rubro",
+      "Listado de materiales"
+    ],
+    "insumos": [
+      { "materialId": "MAT-01", "rendimiento": 0.5 },
+      { "materialId": "MAT-02", "rendimiento": 0.95 },
+      { "materialId": "MAT-03", "rendimiento": 14 },
+      { "materialId": "MAT-04", "rendimiento": 0.22 },
+      { "materialId": "MAT-06", "rendimiento": 0.35 }
+    ],
+    "precioKit": 2400,
+    "canales": ["Marketplace", "WhatsApp", "Facebook"]
+  },
+  {
+    "id": "APP-001",
+    "nombre": "ERP Control de Obra",
+    "categoria": "App ERP",
+    "dimensiones": "SaaS Multiobra",
+    "areaBaseM2": 100,
+    "estilo": "Software",
+    "descripcion": "Control de avance, costos, dashboard y seguimiento de proyectos.",
+    "nivelAcceso": "premium",
+    "incluye": [
+      "Acceso web y movil",
+      "Dashboard ejecutivo",
+      "Control de presupuestos",
+      "Soporte inicial"
+    ],
+    "insumos": [
+      { "materialId": "MAT-01", "rendimiento": 0.02 }
+    ],
+    "precioKit": 399,
+    "canales": ["LinkedIn", "WhatsApp", "Web"]
+  }
+]

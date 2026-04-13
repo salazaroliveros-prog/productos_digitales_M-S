@@ -1,0 +1,15 @@
+{
+  "name": "app_productos_digitales",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma comercial CONSTRUCTORA WM/M&S",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "mongodb": "7.1",
+    "nodemailer": "^8.0.5"
+  }
+}

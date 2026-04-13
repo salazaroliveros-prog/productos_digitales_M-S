@@ -1,0 +1,56 @@
+[
+  {
+    "id": "MAT-01",
+    "nombre": "Cemento UGC",
+    "unidad": "saco",
+    "costoMaterial": 82,
+    "costoManoObra": 15,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "MAT-02",
+    "nombre": "Hierro 3/8",
+    "unidad": "varilla",
+    "costoMaterial": 42,
+    "costoManoObra": 9,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "MAT-03",
+    "nombre": "Block",
+    "unidad": "unidad",
+    "costoMaterial": 5.25,
+    "costoManoObra": 1.1,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "MAT-04",
+    "nombre": "Arena de rio",
+    "unidad": "m3",
+    "costoMaterial": 185,
+    "costoManoObra": 35,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "MAT-05",
+    "nombre": "Cielo falso articulado",
+    "unidad": "m2",
+    "costoMaterial": 110,
+    "costoManoObra": 40,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "MAT-06",
+    "nombre": "Bordillo prefabricado",
+    "unidad": "ml",
+    "costoMaterial": 125,
+    "costoManoObra": 45,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  }
+]
