@@ -1,19 +1,19 @@
 [
   {
     "id": "MAT-01",
-    "nombre": "Cemento UGC",
+    "nombre": "Cemento Portland (indice INE)",
     "unidad": "saco",
-    "costoMaterial": 82,
-    "costoManoObra": 15,
+    "costoMaterial": 108,
+    "costoManoObra": 12,
     "region": "Jutiapa",
     "ultimaActualizacion": "2026-04-12"
   },
   {
     "id": "MAT-02",
-    "nombre": "Hierro 3/8",
+    "nombre": "Acero de refuerzo 3/8",
     "unidad": "varilla",
-    "costoMaterial": 42,
-    "costoManoObra": 9,
+    "costoMaterial": 46,
+    "costoManoObra": 8,
     "region": "Jutiapa",
     "ultimaActualizacion": "2026-04-12"
   },
@@ -21,8 +21,8 @@
     "id": "MAT-03",
     "nombre": "Block",
     "unidad": "unidad",
-    "costoMaterial": 5.25,
-    "costoManoObra": 1.1,
+    "costoMaterial": 6.25,
+    "costoManoObra": 1.35,
     "region": "Jutiapa",
     "ultimaActualizacion": "2026-04-12"
   },
@@ -30,26 +30,134 @@
     "id": "MAT-04",
     "nombre": "Arena de rio",
     "unidad": "m3",
-    "costoMaterial": 185,
-    "costoManoObra": 35,
+    "costoMaterial": 195,
+    "costoManoObra": 32,
     "region": "Jutiapa",
     "ultimaActualizacion": "2026-04-12"
   },
   {
     "id": "MAT-05",
-    "nombre": "Cielo falso articulado",
+    "nombre": "Acabado basico ceramico",
     "unidad": "m2",
-    "costoMaterial": 110,
-    "costoManoObra": 40,
+    "costoMaterial": 74,
+    "costoManoObra": 22,
     "region": "Jutiapa",
     "ultimaActualizacion": "2026-04-12"
   },
   {
     "id": "MAT-06",
-    "nombre": "Bordillo prefabricado",
-    "unidad": "ml",
-    "costoMaterial": 125,
-    "costoManoObra": 45,
+    "nombre": "Ventaneria aluminio estandar",
+    "unidad": "m2",
+    "costoMaterial": 510,
+    "costoManoObra": 95,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "MAT-07",
+    "nombre": "Acabado premium importado",
+    "unidad": "m2",
+    "costoMaterial": 940,
+    "costoManoObra": 180,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "MAT-08",
+    "nombre": "Sistema estructural metalico",
+    "unidad": "m2",
+    "costoMaterial": 610,
+    "costoManoObra": 140,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "LAB-ALB-01",
+    "nombre": "Mano de obra calificada (albanil)",
+    "unidad": "jornal",
+    "costoMaterial": 150,
+    "costoManoObra": 0,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "LAB-AYU-01",
+    "nombre": "Mano de obra apoyo (ayudante)",
+    "unidad": "jornal",
+    "costoMaterial": 95,
+    "costoManoObra": 0,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "RATE-IS-01",
+    "nombre": "Tarifa m2 vivienda interes social (block)",
+    "unidad": "m2",
+    "costoMaterial": 2400,
+    "costoManoObra": 1600,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "RATE-RS-01",
+    "nombre": "Tarifa m2 residencial estandar",
+    "unidad": "m2",
+    "costoMaterial": 3500,
+    "costoManoObra": 2500,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "RATE-RL-01",
+    "nombre": "Tarifa m2 residencial lujo",
+    "unidad": "m2",
+    "costoMaterial": 4700,
+    "costoManoObra": 3300,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "RATE-OP-ESC-01",
+    "nombre": "Tarifa m2 obra publica escuela/centro salud",
+    "unidad": "m2",
+    "costoMaterial": 3800,
+    "costoManoObra": 2600,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "RATE-OP-PS-01",
+    "nombre": "Tarifa m2 puesto de salud estandarizado",
+    "unidad": "m2",
+    "costoMaterial": 4000,
+    "costoManoObra": 2800,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "FAC-PREST-01",
+    "nombre": "Prestaciones y administracion",
+    "unidad": "pct",
+    "costoMaterial": 0.08,
+    "costoManoObra": 0.08,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "FAC-IND-01",
+    "nombre": "Indirectos obra publica",
+    "unidad": "pct",
+    "costoMaterial": 0.07,
+    "costoManoObra": 0.1,
+    "region": "Jutiapa",
+    "ultimaActualizacion": "2026-04-12"
+  },
+  {
+    "id": "FAC-FLETE-01",
+    "nombre": "Flete zonas alejadas",
+    "unidad": "pct",
+    "costoMaterial": 0.03,
+    "costoManoObra": 0.05,
     "region": "Jutiapa",
     "ultimaActualizacion": "2026-04-12"
   }

@@ -1,38 +1,37 @@
 [
   {
     "id": "DIS-001",
-    "nombre": "Sala de Billar Urbano",
+    "nombre": "Vivienda Interes Social 42m2",
     "categoria": "Diseno Arq",
-    "dimensiones": "4.25m x 18m",
-    "areaBaseM2": 76.5,
-    "estilo": "Urbano",
-    "descripcion": "Diseno premium con area social y enfoque en entretenimiento.",
+    "dimensiones": "6m x 7m",
+    "areaBaseM2": 42,
+    "estilo": "Interes Social",
+    "descripcion": "Modelo de interes social con acabados basicos y sistema tradicional de block. Rango referencia Q3,800-Q4,200 por m2.",
     "nivelAcceso": "publico",
     "incluye": [
       "Planos arquitectonicos",
-      "Instalaciones electricas e hidraulicas",
-      "Presupuesto base",
-      "Cuantificacion inicial"
+      "Presupuesto base por m2",
+      "Cuantificacion inicial",
+      "Listado editable de materiales"
     ],
     "insumos": [
-      { "materialId": "MAT-01", "rendimiento": 0.45 },
-      { "materialId": "MAT-02", "rendimiento": 0.85 },
-      { "materialId": "MAT-03", "rendimiento": 12 },
-      { "materialId": "MAT-04", "rendimiento": 0.18 },
-      { "materialId": "MAT-05", "rendimiento": 1.05 }
+      { "materialId": "RATE-IS-01", "rendimiento": 1 },
+      { "materialId": "MAT-01", "rendimiento": 0.015 },
+      { "materialId": "MAT-03", "rendimiento": 0.12 },
+      { "materialId": "MAT-05", "rendimiento": 0.05 }
     ],
-    "precioKit": 1850,
+    "precioKit": 1450,
     "canales": ["Marketplace", "WhatsApp", "Instagram"]
   },
   {
-    "id": "DIS-002",
-    "nombre": "Casa Colonial 10x20",
+    "id": "DIS-RS-001",
+    "nombre": "Residencial Estandar 96m2",
     "categoria": "Diseno Arq",
-    "dimensiones": "10m x 20m",
-    "areaBaseM2": 120,
-    "estilo": "Colonial",
-    "descripcion": "Diseno elegante, ideal para lotes medianos y acabados premium.",
-    "nivelAcceso": "premium",
+    "dimensiones": "8m x 12m",
+    "areaBaseM2": 96,
+    "estilo": "Residencial",
+    "descripcion": "Vivienda residencial estandar con ventaneria de aluminio, cocina modular y losa tradicional. Rango referencia Q5,500-Q6,500 por m2.",
+    "nivelAcceso": "publico",
     "incluye": [
       "Planos completos",
       "Detalles tecnicos",
@@ -40,14 +39,83 @@
       "Listado de materiales"
     ],
     "insumos": [
-      { "materialId": "MAT-01", "rendimiento": 0.5 },
-      { "materialId": "MAT-02", "rendimiento": 0.95 },
-      { "materialId": "MAT-03", "rendimiento": 14 },
-      { "materialId": "MAT-04", "rendimiento": 0.22 },
-      { "materialId": "MAT-06", "rendimiento": 0.35 }
+      { "materialId": "RATE-RS-01", "rendimiento": 1 },
+      { "materialId": "MAT-01", "rendimiento": 0.018 },
+      { "materialId": "MAT-02", "rendimiento": 0.01 },
+      { "materialId": "MAT-06", "rendimiento": 0.03 }
     ],
-    "precioKit": 2400,
+    "precioKit": 2100,
     "canales": ["Marketplace", "WhatsApp", "Facebook"]
+  },
+  {
+    "id": "DIS-RL-001",
+    "nombre": "Residencial de Lujo 180m2",
+    "categoria": "Diseno Arq",
+    "dimensiones": "12m x 15m",
+    "areaBaseM2": 180,
+    "estilo": "Residencial de Lujo",
+    "descripcion": "Residencial de lujo con acabados importados y opcion de sistema estructural avanzado. Rango referencia Q7,200-Q9,000+ por m2.",
+    "nivelAcceso": "premium",
+    "incluye": [
+      "Planos premium",
+      "Integracion arquitectonica",
+      "Especificaciones de acabados",
+      "Presupuesto por m2"
+    ],
+    "insumos": [
+      { "materialId": "RATE-RL-01", "rendimiento": 1 },
+      { "materialId": "MAT-08", "rendimiento": 0.04 },
+      { "materialId": "MAT-07", "rendimiento": 0.05 }
+    ],
+    "precioKit": 3200,
+    "canales": ["Marketplace", "WhatsApp", "LinkedIn"]
+  },
+  {
+    "id": "DIS-OP-001",
+    "nombre": "Modulo Escuela/Centro de Salud",
+    "categoria": "Obra Publica",
+    "dimensiones": "18m x 12m",
+    "areaBaseM2": 216,
+    "estilo": "Institucional",
+    "descripcion": "Plantilla para obra publica con costos indirectos, timbres, supervision y prestaciones integradas.",
+    "nivelAcceso": "publico",
+    "incluye": [
+      "Presupuesto base institucional",
+      "Parametros SNIP",
+      "Factores indirectos editables",
+      "Resumen para CODEDE/Municipalidad"
+    ],
+    "insumos": [
+      { "materialId": "RATE-OP-ESC-01", "rendimiento": 1 },
+      { "materialId": "FAC-PREST-01", "rendimiento": 1 },
+      { "materialId": "FAC-IND-01", "rendimiento": 1 }
+    ],
+    "precioKit": 2600,
+    "canales": ["Municipalidad", "CODEDE", "WhatsApp"]
+  },
+  {
+    "id": "DIS-OP-002",
+    "nombre": "Puesto de Salud Estandarizado",
+    "categoria": "Obra Publica",
+    "dimensiones": "14m x 10m",
+    "areaBaseM2": 140,
+    "estilo": "Institucional Salud",
+    "descripcion": "Modelo de puesto de salud con ajustes por topografia y fletes para zonas alejadas como Comapa y Asuncion Mita.",
+    "nivelAcceso": "publico",
+    "incluye": [
+      "Presupuesto base salud",
+      "Ajustes por topografia",
+      "Flete zona rural",
+      "Prestaciones y gastos administrativos"
+    ],
+    "insumos": [
+      { "materialId": "RATE-OP-PS-01", "rendimiento": 1 },
+      { "materialId": "FAC-PREST-01", "rendimiento": 1 },
+      { "materialId": "FAC-IND-01", "rendimiento": 1 },
+      { "materialId": "FAC-FLETE-01", "rendimiento": 1 }
+    ],
+    "precioKit": 2550,
+    "canales": ["Municipalidad", "CODEDE", "WhatsApp"]
   },
   {
     "id": "APP-001",
@@ -65,7 +133,7 @@
       "Soporte inicial"
     ],
     "insumos": [
-      { "materialId": "MAT-01", "rendimiento": 0.02 }
+      { "materialId": "RATE-RS-01", "rendimiento": 0.03 }
     ],
     "precioKit": 399,
     "canales": ["LinkedIn", "WhatsApp", "Web"]

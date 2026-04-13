@@ -1143,25 +1143,84 @@ async function registrarConsulta(payload = {}) {
 
 function calcularCostoBaseDiseno(diseno, materiales) {
   const area = Math.max(1, parseNumber(diseno.areaBaseM2, 1));
-  const factor = 1.05;
+  const calculo = calcularDetalleCotizacion(diseno, materiales, area, 0.05);
+  return {
+    costoMaterial: calculo.totalMateriales,
+    costoManoObra: calculo.totalManoObra,
+  };
+}
 
-  return (diseno.insumos || []).reduce(
-    (acc, insumo) => {
-      const material = materiales.find((item) => item.id === insumo.materialId);
-      if (!material) {
-        return acc;
-      }
+function resolvePctFromMaterial(material) {
+  const min = parseNumber(material?.costoMaterial, 0);
+  const max = parseNumber(material?.costoManoObra, min);
+  const avg = (min + max) / 2;
+  return avg > 1 ? avg / 100 : avg;
+}
 
-      const cantidad = area * parseNumber(insumo.rendimiento, 0) * factor;
-      const costoMaterial = cantidad * parseNumber(material.costoMaterial, 0);
-      const costoManoObra = cantidad * parseNumber(material.costoManoObra, 0);
+function calcularDetalleCotizacion(diseno, materiales, areaM2, wasteFactor = 0.05) {
+  const area = Number(areaM2);
+  const factor = 1 + Math.max(0, Number(wasteFactor) || 0);
 
-      acc.costoMaterial += costoMaterial;
-      acc.costoManoObra += costoManoObra;
-      return acc;
-    },
-    { costoMaterial: 0, costoManoObra: 0 }
-  );
+  const detalleBase = [];
+  const detallePct = [];
+
+  (diseno.insumos || []).forEach((insumo) => {
+    const mat = materiales.find((item) => item.id === insumo.materialId);
+    if (!mat) {
+      throw new ApiError(404, `Material no encontrado: ${insumo.materialId}`);
+    }
+
+    if (String(mat.unidad || '').toLowerCase() === 'pct') {
+      detallePct.push({ mat, insumo });
+      return;
+    }
+
+    const cantidad = area * parseNumber(insumo.rendimiento, 0) * factor;
+    const costoMaterial = cantidad * parseNumber(mat.costoMaterial, 0);
+    const costoManoObra = cantidad * parseNumber(mat.costoManoObra, 0);
+
+    detalleBase.push({
+      materialId: mat.id,
+      nombre: mat.nombre,
+      unidad: mat.unidad,
+      rendimiento: Number(parseNumber(insumo.rendimiento, 0).toFixed(4)),
+      cantidad: Number(cantidad.toFixed(3)),
+      costoMaterial: Number(costoMaterial.toFixed(2)),
+      costoManoObra: Number(costoManoObra.toFixed(2)),
+      subtotal: Number((costoMaterial + costoManoObra).toFixed(2)),
+    });
+  });
+
+  const subtotalBase = detalleBase.reduce((acc, item) => acc + item.subtotal, 0);
+
+  const detalleAjustes = detallePct.map(({ mat, insumo }) => {
+    const multiplicador = parseNumber(insumo.rendimiento, 1);
+    const pct = resolvePctFromMaterial(mat) * multiplicador;
+    const ajuste = subtotalBase * pct;
+    return {
+      materialId: mat.id,
+      nombre: `${mat.nombre} (ajuste)` ,
+      unidad: '%',
+      rendimiento: Number((pct * 100).toFixed(3)),
+      cantidad: Number((pct * 100).toFixed(3)),
+      costoMaterial: Number(ajuste.toFixed(2)),
+      costoManoObra: 0,
+      subtotal: Number(ajuste.toFixed(2)),
+    };
+  });
+
+  const detalle = [...detalleBase, ...detalleAjustes];
+  const totalMateriales = detalle.reduce((acc, item) => acc + item.costoMaterial, 0);
+  const totalManoObra = detalle.reduce((acc, item) => acc + item.costoManoObra, 0);
+
+  return {
+    area,
+    wasteFactor: Number((factor - 1).toFixed(2)),
+    totalMateriales: Number(totalMateriales.toFixed(2)),
+    totalManoObra: Number(totalManoObra.toFixed(2)),
+    total: Number((totalMateriales + totalManoObra).toFixed(2)),
+    detalle,
+  };
 }
 
 async function getMetricasNegocio(query = null) {
@@ -1506,41 +1565,17 @@ async function cotizar(disenoId, areaM2, wasteFactor = 0.05) {
     throw new ApiError(400, 'Area invalida');
   }
 
-  const factor = 1 + Math.max(0, Number(wasteFactor) || 0);
-  const detalle = diseno.insumos.map((insumo) => {
-    const mat = materiales.find((item) => item.id === insumo.materialId);
-    if (!mat) {
-      throw new ApiError(404, `Material no encontrado: ${insumo.materialId}`);
-    }
-
-    const cantidad = area * Number(insumo.rendimiento) * factor;
-    const costoMaterial = cantidad * Number(mat.costoMaterial);
-    const costoManoObra = cantidad * Number(mat.costoManoObra);
-
-    return {
-      materialId: mat.id,
-      nombre: mat.nombre,
-      unidad: mat.unidad,
-      rendimiento: Number(insumo.rendimiento),
-      cantidad: Number(cantidad.toFixed(3)),
-      costoMaterial: Number(costoMaterial.toFixed(2)),
-      costoManoObra: Number(costoManoObra.toFixed(2)),
-      subtotal: Number((costoMaterial + costoManoObra).toFixed(2)),
-    };
-  });
-
-  const totalMateriales = detalle.reduce((acc, item) => acc + item.costoMaterial, 0);
-  const totalManoObra = detalle.reduce((acc, item) => acc + item.costoManoObra, 0);
+  const calculo = calcularDetalleCotizacion(diseno, materiales, area, wasteFactor);
 
   return {
     disenoId: diseno.id,
     disenoNombre: diseno.nombre,
-    areaM2: area,
-    wasteFactor: Number((factor - 1).toFixed(2)),
-    totalMateriales: Number(totalMateriales.toFixed(2)),
-    totalManoObra: Number(totalManoObra.toFixed(2)),
-    total: Number((totalMateriales + totalManoObra).toFixed(2)),
-    detalle,
+    areaM2: calculo.area,
+    wasteFactor: calculo.wasteFactor,
+    totalMateriales: calculo.totalMateriales,
+    totalManoObra: calculo.totalManoObra,
+    total: calculo.total,
+    detalle: calculo.detalle,
   };
 }
 
