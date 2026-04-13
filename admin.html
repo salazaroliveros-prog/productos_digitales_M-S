@@ -99,6 +99,8 @@
         <div class="field"><label for="smtp-test-to">Correo prueba</label><input id="smtp-test-to" type="email" placeholder="correo@dominio.com" /></div>
         <button id="smtp-test-btn" type="button" class="btn">Enviar prueba</button>
       </div>
+      <div id="smtp-summary" class="dashboard-grid admin-gap-top"></div>
+      <div id="smtp-table"></div>
       <pre id="smtp-status"></pre>
     </section>
 
@@ -108,9 +110,13 @@
         <div class="field"><label for="hist-destino">Destino (email)</label><input id="hist-destino" /></div>
         <div class="field"><label for="hist-desde">Desde</label><input id="hist-desde" type="date" /></div>
         <div class="field"><label for="hist-hasta">Hasta</label><input id="hist-hasta" type="date" /></div>
+        <div class="field"><label for="hist-estado">Estado rapido</label><select id="hist-estado"><option value="">Todos</option><option value="ok">Solo exitosos</option><option value="error">Solo error</option><option value="reenviado">Solo reenvios</option></select></div>
+        <div class="field"><label for="hist-search">Buscar (venta/email)</label><input id="hist-search" placeholder="VEN-001 o correo@dominio.com" /></div>
         <button id="hist-filtrar" type="button" class="btn ghost">Filtrar</button>
         <button id="hist-export" type="button" class="btn">Exportar CSV</button>
       </div>
+      <div id="historial-summary" class="dashboard-grid admin-gap-top"></div>
+      <div id="historial-table"></div>
       <pre id="admin-historial"></pre>
     </section>
   </main>

@@ -16,6 +16,7 @@ const state = {
 };
 
 const debounceTimers = {};
+let revealObserver = null;
 
 const el = {
   catalogo: document.getElementById('catalogo-grid'),
@@ -38,6 +39,54 @@ function showToast(message, isError = false) {
   setTimeout(() => {
     el.toast.style.opacity = '0';
   }, 2600);
+}
+
+function setSpotlightPosition(target, event) {
+  const rect = target.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  target.style.setProperty('--mx', `${x}px`);
+  target.style.setProperty('--my', `${y}px`);
+}
+
+function bindSpotlightEffects(scope = document) {
+  const interactiveCards = Array.from(scope.querySelectorAll('.card, .route-card, .shell-section'));
+  interactiveCards.forEach((node) => {
+    if (node.dataset.spotlightBound === '1') return;
+    node.dataset.spotlightBound = '1';
+    node.addEventListener('pointermove', (event) => setSpotlightPosition(node, event));
+  });
+}
+
+function registerRevealItems(scope = document) {
+  const targets = Array.from(scope.querySelectorAll('.shell-section, .route-card, .card, .form-card, .metric'));
+  if (!targets.length) return;
+
+  if (!revealObserver) {
+    revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.12 }
+    );
+  }
+
+  targets.forEach((node, index) => {
+    if (node.dataset.revealBound === '1') return;
+    node.dataset.revealBound = '1';
+    node.classList.add('reveal-item');
+    node.style.transitionDelay = `${Math.min(index * 35, 260)}ms`;
+    revealObserver.observe(node);
+  });
+}
+
+function initInteractiveUi(scope = document) {
+  bindSpotlightEffects(scope);
+  registerRevealItems(scope);
 }
 
 function setClientSession(token, profile = null) {
@@ -145,6 +194,7 @@ function renderCatalogo() {
   }
 
   el.catalogo.innerHTML = state.disenos.map(cardTemplate).join('');
+  initInteractiveUi(el.catalogo);
 
   document.querySelectorAll('.area-range').forEach((input) => {
     input.addEventListener('input', (event) => {
@@ -310,6 +360,7 @@ async function loadDashboard() {
       <ul class="channels">${channels || '<li>Sin datos</li>'}</ul>
     </article>
   `;
+  initInteractiveUi(el.dashboard);
 }
 
 async function refreshSessionFromToken() {
@@ -452,6 +503,7 @@ async function bootstrap() {
     }, true);
     hydrateLeadFormFromQuery();
     bindForms();
+    initInteractiveUi(document);
     showToast('Sistema listo: CONSTRUCTORA WM/M&S');
   } catch (error) {
     showToast(`Error de inicio: ${error.message}`, true);

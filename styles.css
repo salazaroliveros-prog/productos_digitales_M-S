@@ -354,6 +354,39 @@ label,
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.route-card::after,
+.card::after,
+.shell-section::after {
+  content: '';
+  position: absolute;
+  left: var(--mx, 50%);
+  top: var(--my, 50%);
+  width: 220px;
+  height: 220px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(254, 165, 32, 0.2) 0%, rgba(254, 165, 32, 0) 62%);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.route-card:hover,
+.card:hover,
+.shell-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 44px -30px rgba(4, 21, 37, 0.42);
+  border-color: rgba(4, 21, 37, 0.16);
+}
+
+.route-card:hover::after,
+.card:hover::after,
+.shell-section:hover::after {
+  opacity: 1;
 }
 
 .route-card h3 {
@@ -411,6 +444,19 @@ label,
   background: rgba(255, 255, 255, 0.68);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.reveal-item {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.reveal-item.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .section-headline {
@@ -826,6 +872,33 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #4b5f72;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pill.ok {
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+}
+
+.status-pill.warn {
+  background: rgba(217, 119, 6, 0.15);
+  color: #9a5b00;
+}
+
+.status-pill.error {
+  background: rgba(185, 28, 28, 0.14);
+  color: #b91c1c;
 }
 
 .toast {

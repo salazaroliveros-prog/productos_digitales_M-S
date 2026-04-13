@@ -1,5 +1,6 @@
 const state = {
   session: null,
+  historialRows: [],
   realtime: {
     enabled: true,
     intervalMs: 3000,
@@ -33,10 +34,16 @@ const el = {
   histDestino: document.getElementById('hist-destino'),
   histDesde: document.getElementById('hist-desde'),
   histHasta: document.getElementById('hist-hasta'),
+  histEstado: document.getElementById('hist-estado'),
+  histSearch: document.getElementById('hist-search'),
   histFiltrar: document.getElementById('hist-filtrar'),
   histExport: document.getElementById('hist-export'),
+  historialSummary: document.getElementById('historial-summary'),
+  historialTable: document.getElementById('historial-table'),
   historial: document.getElementById('admin-historial'),
   smtpStatus: document.getElementById('smtp-status'),
+  smtpSummary: document.getElementById('smtp-summary'),
+  smtpTable: document.getElementById('smtp-table'),
   smtpStatusBtn: document.getElementById('smtp-status-btn'),
   smtpTestTo: document.getElementById('smtp-test-to'),
   smtpTestBtn: document.getElementById('smtp-test-btn'),
@@ -317,6 +324,166 @@ function parseItemsJson(value) {
   return parsed;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString('es-GT');
+}
+
+function renderSmtpStatus(data = {}) {
+  const smtp = data.smtp || data || {};
+  const test = data.test || null;
+
+  const configured = Boolean(smtp.configured);
+  const transport = configured ? 'Configurado' : 'Incompleto';
+  const secure = smtp.secure ? 'Si' : 'No';
+  const host = smtp.host || '-';
+  const from = smtp.from || '-';
+
+  if (el.smtpSummary) {
+    el.smtpSummary.innerHTML = [
+      { label: 'Estado SMTP', value: transport },
+      { label: 'Host', value: host },
+      { label: 'Puerto', value: smtp.port ?? '-' },
+      { label: 'Seguro TLS', value: secure },
+      { label: 'Remitente', value: from, span2: true },
+      { label: 'Ultima prueba', value: test ? (test.sent ? 'Enviada' : 'Simulada') : 'Sin prueba', span2: true },
+    ]
+      .map(
+        (item) => `
+        <article class="metric ${item.span2 ? 'span-2' : ''}">
+          <h4>${item.label}</h4>
+          <p>${escapeHtml(item.value)}</p>
+        </article>
+      `
+      )
+      .join('');
+  }
+
+  if (el.smtpTable) {
+    el.smtpTable.innerHTML = `
+      <table class="admin-table">
+        <thead>
+          <tr><th>Parametro</th><th>Valor</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>configured</td><td><span class="status-pill ${configured ? 'ok' : 'warn'}">${configured ? 'true' : 'false'}</span></td></tr>
+          <tr><td>host</td><td>${escapeHtml(host)}</td></tr>
+          <tr><td>port</td><td>${escapeHtml(smtp.port ?? '-')}</td></tr>
+          <tr><td>secure</td><td>${escapeHtml(secure)}</td></tr>
+          <tr><td>from</td><td>${escapeHtml(from)}</td></tr>
+          <tr><td>userConfigured</td><td>${escapeHtml(Boolean(smtp.userConfigured))}</td></tr>
+          <tr><td>passConfigured</td><td>${escapeHtml(Boolean(smtp.passConfigured))}</td></tr>
+        </tbody>
+      </table>
+    `;
+  }
+
+  el.smtpStatus.textContent = JSON.stringify(data, null, 2);
+}
+
+function normalizeHistorialEstado(row = {}) {
+  const estado = String(row.estado || '').toLowerCase();
+  if (row.reenviado) return 'reenviado';
+  if (estado.includes('error') || estado.includes('fall')) return 'error';
+  return 'ok';
+}
+
+function getFilteredHistorialRows() {
+  const estado = String(el.histEstado?.value || '').trim();
+  const search = String(el.histSearch?.value || '').trim().toLowerCase();
+
+  return state.historialRows.filter((row) => {
+    const rowEstado = normalizeHistorialEstado(row);
+    if (estado && rowEstado !== estado) {
+      return false;
+    }
+
+    if (search) {
+      const haystack = `${row.ventaId || ''} ${row.destino || ''}`.toLowerCase();
+      if (!haystack.includes(search)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+function renderHistorial(rows = []) {
+  if (el.historialSummary) {
+    const okCount = rows.filter((row) => normalizeHistorialEstado(row) === 'ok').length;
+    const errorCount = rows.filter((row) => normalizeHistorialEstado(row) === 'error').length;
+    const reenviados = rows.filter((row) => Boolean(row.reenviado)).length;
+    const envioReal = rows.filter((row) => Boolean(row.envioReal)).length;
+
+    el.historialSummary.innerHTML = [
+      { label: 'Registros filtrados', value: rows.length },
+      { label: 'Exitosos', value: okCount },
+      { label: 'Con error', value: errorCount },
+      { label: 'Reenvios', value: reenviados },
+      { label: 'Envio SMTP real', value: envioReal },
+    ]
+      .map(
+        (item) => `
+        <article class="metric">
+          <h4>${item.label}</h4>
+          <p>${escapeHtml(item.value)}</p>
+        </article>
+      `
+      )
+      .join('');
+  }
+
+  if (!el.historialTable) return;
+
+  if (!rows.length) {
+    el.historialTable.innerHTML = '<p>No hay registros para el filtro actual.</p>';
+    return;
+  }
+
+  const body = rows
+    .slice(0, 50)
+    .map((row) => {
+      const estado = normalizeHistorialEstado(row);
+      return `
+      <tr>
+        <td>${escapeHtml(formatDateTime(row.fecha))}</td>
+        <td>${escapeHtml(row.ventaId || '-')}</td>
+        <td>${escapeHtml(row.destino || '-')}</td>
+        <td>${escapeHtml(row.accion || '-')}</td>
+        <td>${escapeHtml(row.modoEnvio || '-')}</td>
+        <td><span class="status-pill ${estado === 'ok' ? 'ok' : estado === 'error' ? 'error' : 'warn'}">${escapeHtml(estado)}</span></td>
+        <td>${escapeHtml(row.solicitadoPor || '-')}</td>
+      </tr>
+    `;
+    })
+    .join('');
+
+  el.historialTable.innerHTML = `
+    <table class="admin-table">
+      <thead>
+        <tr><th>Fecha</th><th>Venta</th><th>Destino</th><th>Accion</th><th>Modo</th><th>Estado</th><th>Solicitado por</th></tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>
+  `;
+}
+
+function refreshHistorialView() {
+  renderHistorial(getFilteredHistorialRows());
+}
+
 function renderKpis(resumen = {}) {
   const canalItems =
     Object.entries(resumen.ventasPorCanal || {})
@@ -591,12 +758,14 @@ async function loadHistorial() {
   if (hasta) query.set('hasta', hasta);
   const suffix = query.toString() ? `?${query.toString()}` : '';
   const historial = await adminRequest(`/api/integracion/appsheet/historial-credenciales${suffix}`);
+  state.historialRows = Array.isArray(historial) ? historial : [];
+  refreshHistorialView();
   el.historial.textContent = JSON.stringify(historial.slice(0, 30), null, 2);
 }
 
 async function loadSmtpStatus() {
   const status = await adminRequest('/api/integracion/appsheet/smtp-status');
-  el.smtpStatus.textContent = JSON.stringify(status, null, 2);
+  renderSmtpStatus(status);
 }
 
 async function sendSmtpTest() {
@@ -610,7 +779,7 @@ async function sendSmtpTest() {
     body: JSON.stringify({ to }),
   });
 
-  el.smtpStatus.textContent = JSON.stringify(result, null, 2);
+  renderSmtpStatus(result);
 }
 
 async function connectAdmin() {
@@ -666,6 +835,8 @@ el.disenoForm.addEventListener('submit', async (event) => {
 
 el.refresh.addEventListener('click', loadMetricas);
 el.histFiltrar.addEventListener('click', loadHistorial);
+el.histEstado?.addEventListener('change', refreshHistorialView);
+el.histSearch?.addEventListener('input', refreshHistorialView);
 el.histExport.addEventListener('click', () => {
   const destino = String(el.histDestino.value || '').trim();
   const desde = String(el.histDesde.value || '').trim();
