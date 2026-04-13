@@ -30,6 +30,15 @@ function showMiniToast(message, isError = false) {
   }, 2600);
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.readAsDataURL(file);
+  });
+}
+
 async function apiRequest(url, options = {}) {
   const response = await fetch(url, {
     method: options.method || 'GET',
@@ -244,20 +253,25 @@ function setupPaymentScreen() {
     const paqueteTexto = selected ? `${selected.name} ${gtq.format(selected.price)}` : 'No definido';
 
     try {
-      await apiRequest('/api/leads', {
+      const fileDataBase64 = await fileToDataUrl(comprobante);
+      const upload = await apiRequest('/api/pagos/comprobante', {
         method: 'POST',
         body: JSON.stringify({
           nombre,
           email,
           telefono,
-          canal: 'WhatsApp',
-          interes: 'Validacion de pago',
-          mensaje: `Comprobante recibido para ${paqueteTexto}. Archivo: ${comprobante.name}`,
+          paqueteId: selected?.id || '',
+          paqueteNombre: selected?.name || '',
+          paquetePrecio: selected?.price || 0,
+          fileName: comprobante.name,
+          fileType: comprobante.type,
+          fileSize: comprobante.size,
+          fileDataBase64,
         }),
       });
 
-      appendChatMessage('Comprobante recibido. Tu validacion quedo en revision.', 'user');
-      appendChatMessage('Listo. El equipo validara tu pago y activara acceso AppSheet.', 'bot');
+      appendChatMessage(`Comprobante recibido (${upload.comprobanteId}). Tu validacion quedo en revision.`, 'user');
+      appendChatMessage(`Listo. El equipo validara tu pago para ${paqueteTexto} y activara acceso AppSheet.`, 'bot');
       form.reset();
       showMiniToast('Comprobante enviado para validacion.');
     } catch (error) {

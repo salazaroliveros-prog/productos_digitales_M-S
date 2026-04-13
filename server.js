@@ -42,6 +42,10 @@ const DB_PROVIDER = String(process.env.DB_PROVIDER || (process.env.MONGO_URI ? '
 const MONGO_URI = process.env.MONGO_URI || '';
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'app_productos_digitales';
 const MONGO_SEED_ON_START = String(process.env.MONGO_SEED_ON_START || 'true').toLowerCase() === 'true';
+const MAX_JSON_BODY_MB = parseInt(process.env.MAX_JSON_BODY_MB || '6', 10);
+const COMPROBANTE_MAX_MB = parseInt(process.env.COMPROBANTE_MAX_MB || '5', 10);
+const MAKE_WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET || '';
+const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || '';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -62,7 +66,7 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
 };
 
-const COLLECTIONS = ['ventas', 'leads', 'disenos', 'materiales', 'notificaciones', 'consultas', 'accesos', 'paquetes', 'password-resets'];
+const COLLECTIONS = ['ventas', 'leads', 'disenos', 'materiales', 'notificaciones', 'consultas', 'accesos', 'paquetes', 'password-resets', 'comprobantes'];
 
 let runtimeProvider = DB_PROVIDER === 'mongo' ? 'mongo' : 'json';
 let mongoClient = null;
@@ -210,6 +214,47 @@ function ensureDeliverablesDirectory() {
   if (!fs.existsSync(DELIVERABLES_DIR)) {
     fs.mkdirSync(DELIVERABLES_DIR, { recursive: true });
   }
+}
+
+function ensureComprobantesDirectory() {
+  ensureDeliverablesDirectory();
+  const dir = path.join(DELIVERABLES_DIR, 'comprobantes');
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+}
+
+function parseDataUrlBase64(payload = '') {
+  const input = String(payload || '').trim();
+  const match = input.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) {
+    throw new ApiError(400, 'fileDataBase64 debe estar en formato data URL base64');
+  }
+
+  const mimeType = String(match[1] || '').toLowerCase();
+  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+  if (!allowed.includes(mimeType)) {
+    throw new ApiError(400, `Tipo de archivo no permitido: ${mimeType}`);
+  }
+
+  const base64 = match[2] || '';
+  const buffer = Buffer.from(base64, 'base64');
+  if (!buffer.length) {
+    throw new ApiError(400, 'Archivo vacio');
+  }
+
+  if (buffer.length > COMPROBANTE_MAX_MB * 1024 * 1024) {
+    throw new ApiError(400, `Archivo excede el limite de ${COMPROBANTE_MAX_MB}MB`);
+  }
+
+  return { mimeType, buffer };
+}
+
+function safeFilename(name = '') {
+  return String(name || '')
+    .replace(/[^a-zA-Z0-9_.-]/g, '_')
+    .slice(0, 120);
 }
 
 function generateDeliverableToken(ventaId, archivo) {
@@ -1508,7 +1553,7 @@ function parseBody(req) {
     let raw = '';
     req.on('data', (chunk) => {
       raw += chunk;
-      if (raw.length > 1e6) {
+      if (raw.length > MAX_JSON_BODY_MB * 1024 * 1024) {
         reject(new Error('Body too large'));
       }
     });
@@ -1583,6 +1628,51 @@ async function routeApi(req, res, url) {
   const pathname = url.pathname;
   const query = url.searchParams;
   const authContext = await getAuthContext(req);
+
+  if (req.method === 'GET' && pathname === '/api/webhooks/whatsapp') {
+    const mode = query.get('hub.mode');
+    const token = query.get('hub.verify_token');
+    const challenge = query.get('hub.challenge') || '';
+
+    if (mode === 'subscribe' && token && token === WHATSAPP_VERIFY_TOKEN) {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(challenge);
+      return true;
+    }
+
+    sendJson(res, 403, { error: 'Webhook verify token invalido' });
+    return true;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/webhooks/whatsapp') {
+    const body = await parseBody(req);
+    const entries = Array.isArray(body.entry) ? body.entry : [];
+    const changes = entries.flatMap((entry) => (Array.isArray(entry.changes) ? entry.changes : []));
+    const messages = changes
+      .map((change) => change?.value?.messages || [])
+      .flat()
+      .filter(Boolean);
+
+    const processed = [];
+    for (const message of messages) {
+      const from = String(message.from || '').trim();
+      const text = String(message.text?.body || '').toLowerCase();
+      if (text.includes('pago')) {
+        await registrarConsulta({
+          evento: 'whatsapp-pago-trigger',
+          detalle: 'Usuario solicito flujo de pago desde WhatsApp',
+          canal: 'WhatsApp',
+          origen: 'webhook-whatsapp',
+          clienteEmail: '',
+          tokenValido: false,
+        });
+        processed.push({ from, action: 'captured-pago-keyword' });
+      }
+    }
+
+    sendJson(res, 200, { ok: true, processed: processed.length, detail: processed });
+    return true;
+  }
 
   if (req.method === 'GET' && pathname === '/api/health') {
     sendJson(res, 200, {
@@ -2164,6 +2254,83 @@ CONSTRUCTORA WM/M&S
     return true;
   }
 
+  if (req.method === 'POST' && pathname === '/api/pagos/comprobante') {
+    const body = await parseBody(req);
+    const nombre = String(body.nombre || '').trim();
+    const telefono = String(body.telefono || '').trim();
+    if (!nombre || !telefono) {
+      throw new ApiError(400, 'nombre y telefono requeridos');
+    }
+
+    const email = normalizeEmail(body.email || '');
+    const paqueteId = String(body.paqueteId || '').trim();
+    const paqueteNombre = String(body.paqueteNombre || '').trim();
+    const paquetePrecio = parseNumber(body.paquetePrecio, 0);
+
+    const { mimeType, buffer } = parseDataUrlBase64(body.fileDataBase64 || '');
+    const ext = mimeType === 'application/pdf' ? 'pdf' : 'jpg';
+    const comprobanteId = `CMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const baseName = safeFilename(body.fileName || `${comprobanteId}.${ext}`) || `${comprobanteId}.${ext}`;
+
+    const dir = ensureComprobantesDirectory();
+    const diskName = `${comprobanteId}_${baseName}`;
+    const diskPath = path.join(dir, diskName);
+    fs.writeFileSync(diskPath, buffer);
+
+    const comprobantes = await readCollection('comprobantes', []);
+    const comprobante = {
+      id: comprobanteId,
+      fecha: new Date().toISOString(),
+      nombre,
+      email,
+      telefono,
+      paqueteId,
+      paqueteNombre,
+      paquetePrecio,
+      mimeType,
+      fileName: baseName,
+      filePath: `deliverables/comprobantes/${diskName}`,
+      fileSize: buffer.length,
+      estado: 'pendiente-validacion',
+      canal: 'WhatsApp',
+      origen: 'pago-web',
+      validadoPor: '',
+      validadoEn: '',
+      ventaId: '',
+      notas: '',
+    };
+    comprobantes.push(comprobante);
+    await writeCollection('comprobantes', comprobantes);
+
+    const leads = await readCollection('leads', []);
+    const lead = {
+      id: `LEAD-${Date.now()}`,
+      fecha: new Date().toISOString(),
+      nombre,
+      email,
+      telefono,
+      canal: 'WhatsApp',
+      interes: 'Validacion de pago',
+      mensaje: `Comprobante cargado (${baseName}) para ${paqueteNombre || 'paquete'} ${paquetePrecio ? `Q${paquetePrecio}` : ''}`.trim(),
+      estado: 'nuevo',
+      comprobanteId,
+    };
+    leads.push(lead);
+    await writeCollection('leads', leads);
+
+    await registrarConsulta({
+      evento: 'comprobante-subido',
+      detalle: `Comprobante ${comprobanteId} cargado para validacion`,
+      canal: 'WhatsApp',
+      origen: 'pago-web',
+      clienteEmail: email,
+      tokenValido: authContext.tokenValido,
+    });
+
+    sendJson(res, 201, { ok: true, comprobanteId, estado: comprobante.estado, leadId: lead.id });
+    return true;
+  }
+
   if (req.method === 'POST' && pathname === '/api/leads') {
     const body = await parseBody(req);
     const leads = await readCollection('leads', []);
@@ -2189,6 +2356,89 @@ CONSTRUCTORA WM/M&S
       tokenValido: authContext.tokenValido,
     });
     sendJson(res, 201, lead);
+    return true;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/integracion/appsheet/comprobantes') {
+    checkIntegrationKey(req);
+    const comprobantes = await readCollection('comprobantes', []);
+    sendJson(
+      res,
+      200,
+      [...comprobantes]
+        .sort((a, b) => new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime())
+        .slice(0, 100)
+    );
+    return true;
+  }
+
+  if (req.method === 'PATCH' && pathname.startsWith('/api/integracion/appsheet/comprobantes/') && pathname.endsWith('/validar')) {
+    checkIntegrationKey(req);
+    const comprobanteId = pathname.replace('/api/integracion/appsheet/comprobantes/', '').replace('/validar', '').trim();
+    const body = await parseBody(req);
+    const estado = String(body.estado || 'validado').toLowerCase();
+    if (!['validado', 'rechazado', 'pendiente-validacion'].includes(estado)) {
+      throw new ApiError(400, 'estado invalido');
+    }
+
+    const comprobantes = await readCollection('comprobantes', []);
+    const comprobante = comprobantes.find((item) => item.id === comprobanteId);
+    if (!comprobante) {
+      throw new ApiError(404, 'Comprobante no encontrado');
+    }
+
+    comprobante.estado = estado;
+    comprobante.validadoPor = String(body.validadoPor || 'admin').trim();
+    comprobante.validadoEn = new Date().toISOString();
+    comprobante.notas = String(body.notas || '').trim();
+    if (body.ventaId) {
+      comprobante.ventaId = String(body.ventaId || '').trim();
+    }
+
+    await writeCollection('comprobantes', comprobantes);
+    sendJson(res, 200, { ok: true, comprobante });
+    return true;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/webhooks/make/comprobante-validado') {
+    const body = await parseBody(req);
+    const providedSecret = String(req.headers['x-webhook-secret'] || body.secret || '').trim();
+    if (MAKE_WEBHOOK_SECRET && providedSecret !== MAKE_WEBHOOK_SECRET) {
+      throw new ApiError(401, 'Webhook secret invalido');
+    }
+
+    const comprobanteId = String(body.comprobanteId || '').trim();
+    if (!comprobanteId) {
+      throw new ApiError(400, 'comprobanteId requerido');
+    }
+
+    const comprobantes = await readCollection('comprobantes', []);
+    const comprobante = comprobantes.find((item) => item.id === comprobanteId);
+    if (!comprobante) {
+      throw new ApiError(404, 'Comprobante no encontrado');
+    }
+
+    comprobante.estado = String(body.estado || 'validado').toLowerCase();
+    comprobante.validadoPor = String(body.validadoPor || 'make-webhook').trim();
+    comprobante.validadoEn = new Date().toISOString();
+    if (body.ventaId) {
+      comprobante.ventaId = String(body.ventaId || '').trim();
+    }
+    comprobante.notas = String(body.notas || '').trim();
+    await writeCollection('comprobantes', comprobantes);
+
+    if (comprobante.ventaId && comprobante.estado === 'validado') {
+      const ventas = await readCollection('ventas', []);
+      const venta = ventas.find((item) => item.id === comprobante.ventaId);
+      if (venta) {
+        venta.estadoPago = 'pagado';
+        venta.fechaPagoVerificado = new Date().toISOString();
+        await activarEntregaSiPagado(venta);
+        await writeCollection('ventas', ventas);
+      }
+    }
+
+    sendJson(res, 200, { ok: true, comprobanteId, estado: comprobante.estado, ventaId: comprobante.ventaId || '' });
     return true;
   }
 
