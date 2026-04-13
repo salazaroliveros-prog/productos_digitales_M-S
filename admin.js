@@ -9,7 +9,9 @@ const el = {
   inventario: document.getElementById('admin-inventario'),
   disenoForm: document.getElementById('admin-diseno-form'),
   ventas: document.getElementById('admin-ventas'),
+  kpis: document.getElementById('admin-kpis'),
   metricas: document.getElementById('admin-metricas'),
+  topDisenos: document.getElementById('admin-top-disenos'),
   consultas: document.getElementById('admin-consultas'),
   metDesde: document.getElementById('met-desde'),
   metHasta: document.getElementById('met-hasta'),
@@ -176,6 +178,60 @@ function parseItemsJson(value) {
   return parsed;
 }
 
+function renderKpis(resumen = {}) {
+  const cards = [
+    { label: 'Ventas pagadas', value: resumen.ventasPagadas ?? 0 },
+    { label: 'Ingresos pagados', value: `Q${Number(resumen.ingresosPagados || 0).toFixed(2)}` },
+    { label: 'Utilidad neta', value: `Q${Number(resumen.utilidadNetaTotal || 0).toFixed(2)}` },
+    { label: 'Margen promedio', value: `${Number(resumen.margenPromedioPorcentaje || 0).toFixed(2)}%` },
+    { label: 'Consultas registradas', value: resumen.consultasRegistradas ?? 0 },
+    { label: 'Envios credenciales', value: resumen.enviosCredenciales ?? 0 },
+    { label: 'Reenvios credenciales', value: resumen.reenviosCredenciales ?? 0 },
+    { label: 'Envios SMTP reales', value: resumen.enviosCredencialesReales ?? 0 },
+  ];
+
+  el.kpis.innerHTML = cards
+    .map(
+      (card) => `
+      <article class="metric">
+        <h4>${card.label}</h4>
+        <p>${card.value}</p>
+      </article>
+    `
+    )
+    .join('');
+}
+
+function renderTopDisenos(items = []) {
+  if (!Array.isArray(items) || items.length === 0) {
+    el.topDisenos.innerHTML = '<p>No hay datos de ranking para el rango seleccionado.</p>';
+    return;
+  }
+
+  const rows = items
+    .slice(0, 10)
+    .map(
+      (item, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${item.disenoId || ''}</td>
+        <td>${item.disenoNombre || '-'}</td>
+        <td>${item.consultas || 0}</td>
+      </tr>
+    `
+    )
+    .join('');
+
+  el.topDisenos.innerHTML = `
+    <table class="admin-table">
+      <thead>
+        <tr><th>#</th><th>ID</th><th>Diseno</th><th>Consultas</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
 function renderPaquetes(paquetes) {
   el.paqListado.innerHTML = paquetes
     .slice(0, 30)
@@ -291,6 +347,8 @@ async function loadMetricas() {
   const suffix = query.toString() ? `?${query.toString()}` : '';
 
   const metricas = await adminRequest(`/api/integracion/appsheet/metricas${suffix}`);
+  renderKpis(metricas.resumen || {});
+  renderTopDisenos(metricas.disenosMasConsultados || []);
   el.metricas.textContent = JSON.stringify(metricas.resumen, null, 2);
 
   const consultas = Array.isArray(metricas.ultimasConsultas) ? metricas.ultimasConsultas : [];

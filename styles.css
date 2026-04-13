@@ -317,7 +317,6 @@ label,
   color: var(--muted);
   font-size: 0.88rem;
 }
-}
 
 .grid {
   display: grid;
@@ -661,6 +660,10 @@ textarea {
   font-size: 1.35rem;
   font-family: 'Manrope', sans-serif;
   font-weight: 900;
+}
+
+#admin-kpis .metric p {
+  font-size: 1.15rem;
 }
 
 .metric.span-2 {
