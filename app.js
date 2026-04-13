@@ -19,8 +19,6 @@ const el = {
   catalogo: document.getElementById('catalogo-grid'),
   dashboard: document.getElementById('dashboard-grid'),
   leadForm: document.getElementById('lead-form'),
-  ventaForm: document.getElementById('venta-form'),
-  ventaDiseno: document.getElementById('venta-diseno'),
   accessForm: document.getElementById('access-form'),
   registerForm: document.getElementById('register-form'),
   accessStatus: document.getElementById('access-status'),
@@ -87,10 +85,10 @@ function cardTemplate(diseno) {
   const lockBadge = locked ? '<span class="badge lock">Premium bloqueado</span>' : '';
   const imageBlock = diseno.imagenBase64
     ? `<figure class="card-media"><img src="${diseno.imagenBase64}" alt="Render ${diseno.nombre}" loading="lazy" /></figure>`
-    : '';
+    : '<figure class="card-media card-media-placeholder"></figure>';
 
   return `
-    <article class="card ${locked ? 'locked' : ''}">
+    <article class="card surgical-card ${locked ? 'locked' : ''}">
       ${imageBlock}
       <div class="card-head">
         <span class="badge">${diseno.categoria}</span>
@@ -99,7 +97,7 @@ function cardTemplate(diseno) {
         <p>${diseno.descripcion}</p>
       </div>
 
-      <dl class="meta">
+      <dl class="meta surgical-meta">
         <div><dt>Dimensiones</dt><dd>${diseno.dimensiones}</dd></div>
         <div><dt>Area base</dt><dd>${diseno.areaBaseM2} m2</dd></div>
         <div><dt>Estilo</dt><dd>${diseno.estilo}</dd></div>
@@ -121,12 +119,12 @@ function cardTemplate(diseno) {
       <div class="quote-result" id="quote-${diseno.id}">
         <div><span>Materiales</span><strong>${currency.format(0)}</strong></div>
         <div><span>Mano de obra</span><strong>${currency.format(0)}</strong></div>
-        <div class="total"><span>Total</span><strong>${currency.format(0)}</strong></div>
+        <div class="total"><span>Presupuesto estimado</span><strong>${currency.format(0)}</strong></div>
       </div>
 
       <div class="actions">
-        <button type="button" class="btn primary btn-whatsapp" data-diseno-id="${diseno.id}" ${locked ? 'disabled' : ''}>WhatsApp</button>
-        <button type="button" class="btn" data-fill-venta="${diseno.id}">Registrar venta</button>
+        <button type="button" class="btn primary btn-whatsapp" data-diseno-id="${diseno.id}" ${locked ? 'disabled' : ''}>Solicitar por WhatsApp</button>
+        <button type="button" class="btn ghost" data-lead-diseno="${diseno.id}">Ver detalles</button>
       </div>
     </article>
   `;
@@ -177,11 +175,23 @@ function renderCatalogo() {
     });
   });
 
-  document.querySelectorAll('[data-fill-venta]').forEach((button) => {
+  document.querySelectorAll('[data-lead-diseno]').forEach((button) => {
     button.addEventListener('click', () => {
-      el.ventaDiseno.value = button.dataset.fillVenta;
-      el.ventaDiseno.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      showToast('Diseno cargado en formulario de venta');
+      const disenoId = button.dataset.leadDiseno;
+      const diseno = state.disenos.find((item) => item.id === disenoId);
+      if (!diseno) {
+        return;
+      }
+      const leadInteres = document.getElementById('lead-interes');
+      const leadMensaje = document.getElementById('lead-mensaje');
+      if (leadInteres && diseno.categoria) {
+        leadInteres.value = diseno.categoria;
+      }
+      if (leadMensaje) {
+        leadMensaje.value = `Solicito informacion detallada sobre ${diseno.nombre} (${diseno.id}).`;
+      }
+      el.leadForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast('Producto cargado en solicitud comercial');
     });
   });
 }
@@ -214,14 +224,6 @@ async function cotizar(disenoId, areaM2) {
 async function loadDisenos() {
   state.disenos = await request('/api/disenos');
   renderCatalogo();
-
-  el.ventaDiseno.innerHTML = '<option value="">Selecciona un producto</option>';
-  state.disenos.forEach((item) => {
-    const option = document.createElement('option');
-    option.value = item.id;
-    option.textContent = `${item.nombre} (${item.categoria})`;
-    el.ventaDiseno.appendChild(option);
-  });
 }
 
 async function loadDashboard() {
@@ -231,24 +233,24 @@ async function loadDashboard() {
     .join('');
 
   el.dashboard.innerHTML = `
-    <article class="metric">
-      <h4>Ingresos (pagado)</h4>
+    <article class="metric trust-metric">
+      <h4>Ingresos verificados</h4>
       <p>${currency.format(dashboard.ingresos || 0)}</p>
     </article>
-    <article class="metric">
-      <h4>Ventas registradas</h4>
+    <article class="metric trust-metric">
+      <h4>Operaciones registradas</h4>
       <p>${dashboard.totalVentas || 0}</p>
     </article>
-    <article class="metric">
-      <h4>Leads capturados</h4>
+    <article class="metric trust-metric">
+      <h4>Clientes interesados</h4>
       <p>${dashboard.totalLeads || 0}</p>
     </article>
-    <article class="metric">
+    <article class="metric trust-metric">
       <h4>Conversion aprox.</h4>
       <p>${dashboard.conversionAprox || 0}%</p>
     </article>
-    <article class="metric span-2">
-      <h4>Ventas por canal</h4>
+    <article class="metric span-2 trust-metric channels-metric">
+      <h4>Canales de entrada</h4>
       <ul class="channels">${channels || '<li>Sin datos</li>'}</ul>
     </article>
   `;
@@ -280,33 +282,6 @@ function bindForms() {
       el.leadForm.reset();
       await loadDashboard();
       showToast('Lead registrado correctamente');
-    } catch (error) {
-      showToast(error.message, true);
-    }
-  });
-
-  el.ventaForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const formData = new FormData(el.ventaForm);
-    const payload = Object.fromEntries(formData.entries());
-
-    const quote = state.cotizaciones[payload.disenoId];
-    if (!payload.monto && quote) {
-      payload.monto = quote.total;
-    }
-
-    try {
-      const ventaResponse = await request('/api/ventas', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      el.ventaForm.reset();
-      await loadDashboard();
-      if (ventaResponse.entregaAutomatica && ventaResponse.venta?.enlaceEntrega) {
-        showToast('Venta pagada: enlace de entrega generado automaticamente');
-      } else {
-        showToast('Venta registrada correctamente');
-      }
     } catch (error) {
       showToast(error.message, true);
     }
