@@ -1326,6 +1326,104 @@ function calcularDetalleCotizacion(diseno, materiales, areaM2, wasteFactor = 0.0
   };
 }
 
+const TECNICO_PRECIOS_JUTIAPA = {
+  cemento: 82.0,
+  hierro: 45.0,
+  blockUnidad: 4.2,
+  arena: 185.0,
+  piedrin: 210.0,
+  manoObraM2: 450.0,
+};
+
+const TECNICO_RENDIMIENTOS = {
+  cemento: 0.85,
+  hierro: 1.2,
+  blockUnidad: 12.5,
+  arena: 0.15,
+  piedrin: 0.12,
+};
+
+function calcularPresupuestoTecnico(areaM2, wasteFactor = 0.05) {
+  const area = Math.max(1, Number(areaM2) || 1);
+  const factor = 1 + Math.max(0, Number(wasteFactor) || 0);
+
+  const cantidadCemento = area * TECNICO_RENDIMIENTOS.cemento * factor;
+  const cantidadHierro = area * TECNICO_RENDIMIENTOS.hierro * factor;
+  const cantidadBlock = area * TECNICO_RENDIMIENTOS.blockUnidad * factor;
+  const cantidadArena = area * TECNICO_RENDIMIENTOS.arena * factor;
+  const cantidadPiedrin = area * TECNICO_RENDIMIENTOS.piedrin * factor;
+
+  const totalCemento = cantidadCemento * TECNICO_PRECIOS_JUTIAPA.cemento;
+  const totalHierro = cantidadHierro * TECNICO_PRECIOS_JUTIAPA.hierro;
+  const totalBlock = cantidadBlock * TECNICO_PRECIOS_JUTIAPA.blockUnidad;
+  const totalArena = cantidadArena * TECNICO_PRECIOS_JUTIAPA.arena;
+  const totalPiedrin = cantidadPiedrin * TECNICO_PRECIOS_JUTIAPA.piedrin;
+  const totalMO = area * factor * TECNICO_PRECIOS_JUTIAPA.manoObraM2;
+
+  const totalMateriales = totalCemento + totalHierro + totalBlock + totalArena + totalPiedrin;
+  const total = totalMateriales + totalMO;
+
+  return {
+    region: 'Jutiapa',
+    areaM2: Number(area.toFixed(2)),
+    wasteFactor: Number((factor - 1).toFixed(2)),
+    totalMateriales: Number(totalMateriales.toFixed(2)),
+    totalManoObra: Number(totalMO.toFixed(2)),
+    total: Number(total.toFixed(2)),
+    porM2: Number((total / area).toFixed(2)),
+    desglose: [
+      {
+        id: 'cemento',
+        nombre: 'Cemento UGC',
+        unidad: 'saco',
+        cantidad: Number(cantidadCemento.toFixed(2)),
+        precioUnitario: TECNICO_PRECIOS_JUTIAPA.cemento,
+        subtotal: Number(totalCemento.toFixed(2)),
+      },
+      {
+        id: 'hierro',
+        nombre: 'Hierro 3/8',
+        unidad: 'varilla',
+        cantidad: Number(cantidadHierro.toFixed(2)),
+        precioUnitario: TECNICO_PRECIOS_JUTIAPA.hierro,
+        subtotal: Number(totalHierro.toFixed(2)),
+      },
+      {
+        id: 'block',
+        nombre: 'Block sizado',
+        unidad: 'unidad',
+        cantidad: Number(cantidadBlock.toFixed(2)),
+        precioUnitario: TECNICO_PRECIOS_JUTIAPA.blockUnidad,
+        subtotal: Number(totalBlock.toFixed(2)),
+      },
+      {
+        id: 'arena',
+        nombre: 'Arena de rio',
+        unidad: 'm3',
+        cantidad: Number(cantidadArena.toFixed(3)),
+        precioUnitario: TECNICO_PRECIOS_JUTIAPA.arena,
+        subtotal: Number(totalArena.toFixed(2)),
+      },
+      {
+        id: 'piedrin',
+        nombre: 'Piedrin triturado',
+        unidad: 'm3',
+        cantidad: Number(cantidadPiedrin.toFixed(3)),
+        precioUnitario: TECNICO_PRECIOS_JUTIAPA.piedrin,
+        subtotal: Number(totalPiedrin.toFixed(2)),
+      },
+      {
+        id: 'mano-obra',
+        nombre: 'Mano de obra obra gris',
+        unidad: 'm2',
+        cantidad: Number((area * factor).toFixed(2)),
+        precioUnitario: TECNICO_PRECIOS_JUTIAPA.manoObraM2,
+        subtotal: Number(totalMO.toFixed(2)),
+      },
+    ],
+  };
+}
+
 async function getMetricasNegocio(query = null) {
   // Validate query parameters
   let desde, hasta;
@@ -1726,6 +1824,7 @@ async function cotizar(disenoId, areaM2, wasteFactor = 0.05) {
   }
 
   const calculo = calcularDetalleCotizacion(diseno, materiales, area, wasteFactor);
+  const tecnico = calcularPresupuestoTecnico(area, wasteFactor);
 
   return {
     disenoId: diseno.id,
@@ -1736,6 +1835,7 @@ async function cotizar(disenoId, areaM2, wasteFactor = 0.05) {
     totalManoObra: calculo.totalManoObra,
     total: calculo.total,
     detalle: calculo.detalle,
+    presupuestoTecnico: tecnico,
   };
 }
 

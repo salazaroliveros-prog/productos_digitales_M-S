@@ -295,10 +295,16 @@ function updateQuoteView(disenoId, quote) {
   const quoteContainer = document.getElementById(`quote-${disenoId}`);
   if (!quoteContainer) return;
 
+  const tecnico = quote.presupuestoTecnico;
+  const tecnicoLabel = tecnico
+    ? `<div class="quote-tech"><span>Referencia tecnica obra gris</span><strong>${currency.format(tecnico.total)}</strong><small>${tecnico.region} · ${tecnico.porM2.toFixed(2)} por m2</small></div>`
+    : '';
+
   quoteContainer.innerHTML = `
     <div><span>Materiales</span><strong>${currency.format(quote.totalMateriales)}</strong></div>
     <div><span>Mano de obra</span><strong>${currency.format(quote.totalManoObra)}</strong></div>
     <div class="total"><span>Total</span><strong>${currency.format(quote.total)}</strong></div>
+    ${tecnicoLabel}
   `;
 }
 

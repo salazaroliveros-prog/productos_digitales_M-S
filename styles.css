@@ -706,6 +706,31 @@ label,
   font-weight: 800;
 }
 
+.quote-result .quote-tech {
+  margin-top: 0.2rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed rgba(4, 21, 37, 0.15);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.1rem 0.5rem;
+}
+
+.quote-result .quote-tech span {
+  color: #3f5568;
+  font-weight: 700;
+}
+
+.quote-result .quote-tech strong {
+  color: #0f766e;
+  font-size: 0.84rem;
+}
+
+.quote-result .quote-tech small {
+  grid-column: 1 / -1;
+  color: #607387;
+  font-size: 0.68rem;
+}
+
 .actions {
   display: flex;
   gap: 0.45rem;
