@@ -2,10 +2,13 @@ const state = {
   session: null,
   realtime: {
     enabled: true,
-    intervalMs: 5000,
+    intervalMs: 3000,
+    fastIntervalMs: 1000,
+    fastModeUntil: 0,
     timer: null,
     inFlight: false,
     lastSyncAt: null,
+    lastSignature: null,
   },
 };
 
@@ -69,46 +72,92 @@ function updateRealtimeStatusLabel() {
   if (!el.realtimeStatus || !el.realtimeToggle) return;
 
   const enabled = state.realtime.enabled;
+  const fastMode = enabled && Date.now() < state.realtime.fastModeUntil;
+  const modeText = fastMode ? ' (modo rapido)' : '';
   const stamp = state.realtime.lastSyncAt
     ? ` · ultima sync ${new Date(state.realtime.lastSyncAt).toLocaleTimeString('es-GT')}`
     : '';
 
   el.realtimeStatus.textContent = enabled
-    ? `Tiempo real: activo cada ${Math.round(state.realtime.intervalMs / 1000)}s${stamp}`
+    ? `Tiempo real: activo cada ${Math.round(state.realtime.intervalMs / 1000)}s${modeText}${stamp}`
     : 'Tiempo real: pausado';
   el.realtimeToggle.textContent = enabled ? 'Pausar tiempo real' : 'Activar tiempo real';
 }
 
-async function refreshRealtimeTick() {
-  if (!state.session || !state.realtime.enabled || state.realtime.inFlight) {
-    return;
-  }
-
-  state.realtime.inFlight = true;
-  try {
-    await Promise.all([loadVentas(), loadMetricas(), loadLeads()]);
-    state.realtime.lastSyncAt = Date.now();
-    updateRealtimeStatusLabel();
-  } catch (_error) {
-  } finally {
-    state.realtime.inFlight = false;
-  }
+function getRealtimeIntervalMs() {
+  return Date.now() < state.realtime.fastModeUntil ? state.realtime.fastIntervalMs : state.realtime.intervalMs;
 }
 
-function startRealtime() {
+function createRealtimeSnapshot(metricas = {}, leads = []) {
+  const resumen = metricas.resumen || {};
+  return {
+    cotizacionesCliente: Number(resumen.cotizacionesCliente || 0),
+    topLeadId: Array.isArray(leads) && leads.length > 0 ? String(leads[0].id || 'none') : 'none',
+  };
+}
+
+function shouldActivateFastMode(previousSnapshot, currentSnapshot) {
+  if (!previousSnapshot || !currentSnapshot) return false;
+  const hasNewLead = currentSnapshot.topLeadId !== previousSnapshot.topLeadId;
+  const hasNewQuote = currentSnapshot.cotizacionesCliente > previousSnapshot.cotizacionesCliente;
+  return hasNewLead || hasNewQuote;
+}
+
+function scheduleRealtimeNextTick() {
   stopRealtime();
   if (!state.realtime.enabled) {
     updateRealtimeStatusLabel();
     return;
   }
 
+  const waitMs = getRealtimeIntervalMs();
+  state.realtime.timer = setTimeout(refreshRealtimeTick, waitMs);
   updateRealtimeStatusLabel();
-  state.realtime.timer = setInterval(refreshRealtimeTick, state.realtime.intervalMs);
+}
+
+async function refreshRealtimeTick() {
+  if (!state.session || !state.realtime.enabled) {
+    return;
+  }
+
+  if (state.realtime.inFlight) {
+    scheduleRealtimeNextTick();
+    return;
+  }
+
+  state.realtime.inFlight = true;
+  try {
+    const [, metricas, leads] = await Promise.all([loadVentas(), loadMetricas(), loadLeads()]);
+    const snapshot = createRealtimeSnapshot(metricas, leads);
+
+    if (shouldActivateFastMode(state.realtime.lastSignature, snapshot)) {
+      state.realtime.fastModeUntil = Date.now() + 12000;
+    }
+
+    state.realtime.lastSignature = snapshot;
+    state.realtime.lastSyncAt = Date.now();
+    updateRealtimeStatusLabel();
+  } catch (_error) {
+  } finally {
+    state.realtime.inFlight = false;
+    if (state.realtime.enabled) {
+      scheduleRealtimeNextTick();
+    }
+  }
+}
+
+function startRealtime() {
+  if (!state.realtime.enabled) {
+    stopRealtime();
+    updateRealtimeStatusLabel();
+    return;
+  }
+  scheduleRealtimeNextTick();
 }
 
 function stopRealtime() {
   if (state.realtime.timer) {
-    clearInterval(state.realtime.timer);
+    clearTimeout(state.realtime.timer);
     state.realtime.timer = null;
   }
 }
@@ -425,6 +474,7 @@ async function loadInventario() {
 async function loadVentas() {
   const ventas = await adminRequest('/api/integracion/appsheet/ventas');
   renderVentas(ventas);
+  return ventas;
 }
 
 async function loadMetricas() {
@@ -472,6 +522,8 @@ async function loadMetricas() {
       <tbody>${rows}</tbody>
     </table>
   `;
+
+  return metricas;
 }
 
 function renderLeads(leads = []) {
@@ -509,6 +561,7 @@ function renderLeads(leads = []) {
 async function loadLeads() {
   const leads = await adminRequest('/api/integracion/appsheet/leads');
   renderLeads(leads);
+  return leads;
 }
 
 async function loadHistorial() {
@@ -549,7 +602,16 @@ async function connectAdmin() {
     state.session = session;
     el.authStatus.textContent = `Sesion activa: ${session.username}`;
     setAdminLockState(true);
-    await Promise.all([loadInventario(), loadVentas(), loadMetricas(), loadLeads(), loadHistorial(), loadPaquetes(), loadSmtpStatus()]);
+    const [, , metricas, leads] = await Promise.all([
+      loadInventario(),
+      loadVentas(),
+      loadMetricas(),
+      loadLeads(),
+      loadHistorial(),
+      loadPaquetes(),
+      loadSmtpStatus(),
+    ]);
+    state.realtime.lastSignature = createRealtimeSnapshot(metricas, leads);
     state.realtime.lastSyncAt = Date.now();
     startRealtime();
     showToast('Back-office conectado');
