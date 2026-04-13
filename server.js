@@ -11,6 +11,10 @@ const PORT = process.env.PORT || 3007;
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
 const AUTH_SECRET = process.env.AUTH_SECRET || 'wmms-local-secret';
+const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || 'wmms-admin').trim().toLowerCase();
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || '');
+const ADMIN_SESSION_COOKIE = 'wmms_admin_session';
+const ADMIN_SESSION_TTL_HOURS = parseInt(process.env.ADMIN_SESSION_TTL_HOURS || '12', 10);
 const DELIVERY_BASE_URL = process.env.DELIVERY_BASE_URL || 'https://entregas.wmms.local';
 const INTEGRATION_API_KEY = process.env.INTEGRATION_API_KEY || 'wmms-integration-key';
 const SMTP_HOST = process.env.SMTP_HOST || '';
@@ -62,8 +66,8 @@ class ApiError extends Error {
   }
 }
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, { 'Content-Type': MIME_TYPES['.json'] });
+function sendJson(res, statusCode, payload, extraHeaders = {}) {
+  res.writeHead(statusCode, { 'Content-Type': MIME_TYPES['.json'], ...extraHeaders });
   res.end(JSON.stringify(payload));
 }
 
@@ -275,6 +279,15 @@ function signPayload(payload) {
   return crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
 }
 
+function safeCompareString(left, right) {
+  const a = Buffer.from(String(left || ''), 'utf8');
+  const b = Buffer.from(String(right || ''), 'utf8');
+  if (a.length !== b.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(a, b);
+}
+
 function buildToken(email) {
   const payload = JSON.stringify({
     email,
@@ -283,6 +296,97 @@ function buildToken(email) {
   const encoded = toBase64Url(payload);
   const signature = signPayload(encoded);
   return `${encoded}.${signature}`;
+}
+
+function buildAdminSessionToken(username) {
+  const payload = JSON.stringify({
+    username: String(username || '').trim().toLowerCase(),
+    scope: 'admin',
+    exp: Date.now() + 1000 * 60 * 60 * ADMIN_SESSION_TTL_HOURS,
+  });
+  const encoded = toBase64Url(payload);
+  const signature = signPayload(encoded);
+  return `${encoded}.${signature}`;
+}
+
+function verifyAdminSessionToken(token) {
+  if (!token || !token.includes('.')) {
+    return null;
+  }
+
+  const [encoded, signature] = token.split('.');
+  if (!encoded || !signature) {
+    return null;
+  }
+
+  const expected = signPayload(encoded);
+  if (signature !== expected) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(fromBase64Url(encoded));
+    if (payload.scope !== 'admin' || !payload.username || !payload.exp || payload.exp < Date.now()) {
+      return null;
+    }
+    return payload;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function parseCookies(req) {
+  const cookieHeader = String(req.headers.cookie || '');
+  if (!cookieHeader) {
+    return {};
+  }
+
+  return cookieHeader.split(';').reduce((acc, chunk) => {
+    const [rawKey, ...rest] = chunk.trim().split('=');
+    if (!rawKey) {
+      return acc;
+    }
+    acc[rawKey] = decodeURIComponent(rest.join('='));
+    return acc;
+  }, {});
+}
+
+function isSecureRequest(req) {
+  const proto = String(req.headers['x-forwarded-proto'] || '').toLowerCase();
+  const host = String(req.headers.host || '').toLowerCase();
+  return proto === 'https' || (!host.includes('localhost') && !host.startsWith('127.0.0.1'));
+}
+
+function buildAdminCookie(req, token) {
+  const parts = [
+    `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${ADMIN_SESSION_TTL_HOURS * 60 * 60}`,
+  ];
+  if (isSecureRequest(req)) {
+    parts.push('Secure');
+  }
+  return parts.join('; ');
+}
+
+function buildAdminCookieClear(req) {
+  const parts = [`${ADMIN_SESSION_COOKIE}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0'];
+  if (isSecureRequest(req)) {
+    parts.push('Secure');
+  }
+  return parts.join('; ');
+}
+
+function getAdminSession(req) {
+  const cookies = parseCookies(req);
+  const token = cookies[ADMIN_SESSION_COOKIE] || '';
+  return verifyAdminSessionToken(token);
+}
+
+function isAdminAuthenticated(req) {
+  return Boolean(getAdminSession(req));
 }
 
 function verifyToken(token) {
@@ -530,6 +634,9 @@ function toCsv(items, preferredHeaders = []) {
 }
 
 function checkIntegrationKey(req) {
+  if (isAdminAuthenticated(req)) {
+    return;
+  }
   const key = (req.headers['x-api-key'] || '').trim();
   if (!key || key !== INTEGRATION_API_KEY) {
     throw new ApiError(401, 'API key invalida para integracion');
@@ -1262,6 +1369,57 @@ async function routeApi(req, res, url) {
         watermark: venta.clienteEmail || venta.clienteNombre || 'cliente',
         tokenConsumido: ACCESS_SINGLE_USE,
       },
+    });
+    return true;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/admin/login') {
+    const body = await parseBody(req);
+    const username = String(body.username || '').trim().toLowerCase();
+    const password = String(body.password || '');
+
+    if (!ADMIN_PASSWORD) {
+      throw new ApiError(503, 'ADMIN_PASSWORD no configurado');
+    }
+
+    if (!safeCompareString(username, ADMIN_USERNAME) || !safeCompareString(password, ADMIN_PASSWORD)) {
+      throw new ApiError(401, 'Credenciales administrativas invalidas');
+    }
+
+    const token = buildAdminSessionToken(username);
+    sendJson(
+      res,
+      200,
+      {
+        ok: true,
+        username,
+        mensaje: 'Sesion administrativa iniciada',
+      },
+      { 'Set-Cookie': buildAdminCookie(req, token) }
+    );
+    return true;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/admin/logout') {
+    sendJson(
+      res,
+      200,
+      { ok: true, mensaje: 'Sesion administrativa cerrada' },
+      { 'Set-Cookie': buildAdminCookieClear(req) }
+    );
+    return true;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/admin/session') {
+    const session = getAdminSession(req);
+    if (!session) {
+      throw new ApiError(401, 'Sesion administrativa no valida');
+    }
+
+    sendJson(res, 200, {
+      ok: true,
+      username: session.username,
+      exp: session.exp,
     });
     return true;
   }
@@ -2018,6 +2176,30 @@ function serveStatic(req, res, pathname) {
 const requestHandler = (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const { pathname } = url;
+
+  if (pathname === '/admin' || pathname === '/admin/') {
+    if (isAdminAuthenticated(req)) {
+      serveStatic(req, res, '/admin.html');
+      return;
+    }
+    serveStatic(req, res, '/admin-login.html');
+    return;
+  }
+
+  if (pathname === '/admin.html') {
+    if (isAdminAuthenticated(req)) {
+      serveStatic(req, res, pathname);
+      return;
+    }
+    serveStatic(req, res, '/admin-login.html');
+    return;
+  }
+
+  if (pathname === '/admin-login.html' && isAdminAuthenticated(req)) {
+    res.writeHead(302, { Location: '/admin.html' });
+    res.end();
+    return;
+  }
 
   if (pathname.startsWith('/api/')) {
     routeApi(req, res, url)

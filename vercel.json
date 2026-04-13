@@ -8,6 +8,7 @@
         "includeFiles": [
           "index.html",
           "admin.html",
+          "admin-login.html",
           "app.js",
           "admin.js",
           "styles.css",
@@ -39,6 +40,22 @@
   "routes": [
     {
       "src": "/api/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/admin",
+      "dest": "server.js"
+    },
+    {
+      "src": "/admin/",
+      "dest": "server.js"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "server.js"
+    },
+    {
+      "src": "/admin-login.html",
       "dest": "server.js"
     },
     {

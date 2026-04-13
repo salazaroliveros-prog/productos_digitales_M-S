@@ -1,14 +1,11 @@
-const STORAGE_KEY = 'wmms_admin_api_key';
-
 const state = {
-  apiKey: localStorage.getItem(STORAGE_KEY) || '',
+  session: null,
 };
 
 const el = {
-  authForm: document.getElementById('admin-auth-form'),
-  apiKey: document.getElementById('admin-api-key'),
   authStatus: document.getElementById('admin-auth-status'),
   lockedNote: document.getElementById('admin-locked-note'),
+  logoutBtn: document.getElementById('admin-logout-btn'),
   inventario: document.getElementById('admin-inventario'),
   disenoForm: document.getElementById('admin-diseno-form'),
   ventas: document.getElementById('admin-ventas'),
@@ -59,11 +56,10 @@ function setAdminLockState(isUnlocked) {
 async function adminRequest(url, options = {}) {
   const headers = {
     'Content-Type': 'application/json',
-    'x-api-key': state.apiKey,
     ...(options.headers || {}),
   };
 
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, headers, credentials: 'same-origin' });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(body.error || 'Error admin');
@@ -361,30 +357,20 @@ async function sendSmtpTest() {
 }
 
 async function connectAdmin() {
-  if (!state.apiKey) {
-    el.authStatus.textContent = 'Falta API key';
-    setAdminLockState(false);
-    return;
-  }
   try {
-    await adminRequest('/api/integracion/appsheet/schema');
-    el.authStatus.textContent = 'Conectado';
+    const session = await adminRequest('/api/admin/session');
+    state.session = session;
+    el.authStatus.textContent = `Sesion activa: ${session.username}`;
     setAdminLockState(true);
     await Promise.all([loadInventario(), loadVentas(), loadMetricas(), loadHistorial(), loadPaquetes(), loadSmtpStatus()]);
     showToast('Back-office conectado');
   } catch (error) {
+    state.session = null;
     el.authStatus.textContent = 'Error de autenticacion';
     setAdminLockState(false);
     showToast(error.message, true);
   }
 }
-
-el.authForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  state.apiKey = String(el.apiKey.value || '').trim();
-  localStorage.setItem(STORAGE_KEY, state.apiKey);
-  await connectAdmin();
-});
 
 el.disenoForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -420,7 +406,7 @@ el.histExport.addEventListener('click', () => {
   if (hasta) query.set('hasta', hasta);
   const suffix = query.toString() ? `?${query.toString()}` : '';
   const url = `/api/integracion/looker/historial-credenciales.csv${suffix}`;
-  fetch(url, { headers: { 'x-api-key': state.apiKey } })
+  fetch(url, { credentials: 'same-origin' })
     .then((res) => res.text())
     .then((csv) => {
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -470,10 +456,16 @@ el.smtpTestBtn.addEventListener('click', async () => {
   }
 });
 
+el.logoutBtn.addEventListener('click', async () => {
+  try {
+    await adminRequest('/api/admin/logout', { method: 'POST' });
+  } catch (_error) {
+  } finally {
+    window.location.href = '/admin-login.html';
+  }
+});
+
 (function bootstrap() {
   setAdminLockState(false);
-  el.apiKey.value = state.apiKey;
-  if (state.apiKey) {
-    connectAdmin();
-  }
+  connectAdmin();
 })();
