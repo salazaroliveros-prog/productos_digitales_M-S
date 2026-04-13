@@ -852,6 +852,29 @@ textarea {
   margin-top: 0.7rem;
 }
 
+.inventory-section + .inventory-section {
+  margin-top: 1rem;
+}
+
+.inventory-section .section-headline h3 {
+  margin: 0.2rem 0 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.inventory-section .section-headline p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.inventory-card .inventory-meta {
+  margin: 0.3rem 0 0.55rem;
+  color: #506579;
+  font-size: 0.78rem;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;

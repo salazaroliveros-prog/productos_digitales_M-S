@@ -66,6 +66,11 @@ const el = {
 };
 
 const privateSections = Array.from(document.querySelectorAll('.admin-private'));
+const money = new Intl.NumberFormat('es-GT', {
+  style: 'currency',
+  currency: 'GTQ',
+  maximumFractionDigits: 2,
+});
 
 function showToast(message, isError = false) {
   el.toast.textContent = message;
@@ -211,26 +216,113 @@ async function adminRequest(url, options = {}) {
 }
 
 function renderInventario(items) {
-  el.inventario.innerHTML = items
-    .map(
-      (item) => `
-      <div class="form-card">
-        <h3>${item.nombre} (${item.id})</h3>
-        <div class="inline-form">
-          <div class="field"><label>Material</label><input id="mat-${item.id}" type="number" step="0.01" value="${item.costoMaterial}" /></div>
-          <div class="field"><label>Mano obra</label><input id="mo-${item.id}" type="number" step="0.01" value="${item.costoManoObra}" /></div>
-          <button class="btn primary" data-save-mat="${item.id}" type="button">Guardar</button>
-        </div>
-      </div>
-    `
-    )
+  const groups = {
+    tarifas: {
+      title: 'Tarifas por m2 (parametricas)',
+      desc: 'Define rangos base por tipo de vivienda y obra publica. Estas tarifas mueven la calculadora anual.',
+      items: [],
+    },
+    factores: {
+      title: 'Factores porcentuales',
+      desc: 'Prestaciones, indirectos y fletes. Se aplican como porcentaje sobre el subtotal base.',
+      items: [],
+    },
+    manoObra: {
+      title: 'Jornales de mano de obra',
+      desc: 'Valores de referencia para cuadrillas y analisis de costo local.',
+      items: [],
+    },
+    materiales: {
+      title: 'Materiales base',
+      desc: 'Precios unitarios de insumos constructivos. Ajustalos conforme mercado local.',
+      items: [],
+    },
+  };
+
+  const classifyItem = (item) => {
+    const id = String(item.id || '');
+    if (id.startsWith('RATE-')) return 'tarifas';
+    if (id.startsWith('FAC-')) return 'factores';
+    if (id.startsWith('LAB-')) return 'manoObra';
+    return 'materiales';
+  };
+
+  const renderValue = (value, isPct) => {
+    const number = Number(value || 0);
+    return isPct ? Number((number * 100).toFixed(3)) : number;
+  };
+
+  const previewRange = (item, isPct) => {
+    const low = Number(item.costoMaterial || 0);
+    const high = Number(item.costoManoObra || 0);
+    if (isPct) {
+      return `${(low * 100).toFixed(2)}% - ${(high * 100).toFixed(2)}%`;
+    }
+    return `${money.format(low)} - ${money.format(high)}`;
+  };
+
+  items.forEach((item) => {
+    const key = classifyItem(item);
+    groups[key].items.push(item);
+  });
+
+  const order = ['tarifas', 'factores', 'manoObra', 'materiales'];
+  el.inventario.innerHTML = order
+    .map((key) => {
+      const group = groups[key];
+      if (!group.items.length) return '';
+
+      const cards = group.items
+        .map((item) => {
+          const isPct = String(item.unidad || '').toLowerCase() === 'pct';
+          return `
+          <article class="form-card inventory-card">
+            <p class="mini-label">${isPct ? 'factor porcentual' : `unidad ${escapeHtml(item.unidad || '-')}`}</p>
+            <h3>${escapeHtml(item.nombre)} (${escapeHtml(item.id)})</h3>
+            <p class="inventory-meta">Rango actual: ${escapeHtml(previewRange(item, isPct))}</p>
+            <div class="inline-form">
+              <div class="field">
+                <label>${isPct ? 'Valor minimo (%)' : 'Valor base'}</label>
+                <input id="mat-${item.id}" data-unit="${isPct ? 'pct' : 'abs'}" type="number" step="0.01" value="${renderValue(item.costoMaterial, isPct)}" />
+              </div>
+              <div class="field">
+                <label>${isPct ? 'Valor maximo (%)' : 'Valor tope'}</label>
+                <input id="mo-${item.id}" data-unit="${isPct ? 'pct' : 'abs'}" type="number" step="0.01" value="${renderValue(item.costoManoObra, isPct)}" />
+              </div>
+              <button class="btn primary" data-save-mat="${item.id}" type="button">Guardar</button>
+            </div>
+          </article>
+        `;
+        })
+        .join('');
+
+      return `
+        <section class="inventory-section">
+          <div class="section-headline">
+            <div>
+              <span class="mini-label">Parametros editables</span>
+              <h3>${escapeHtml(group.title)}</h3>
+              <p>${escapeHtml(group.desc)}</p>
+            </div>
+          </div>
+          <div class="catalog-grid">${cards}</div>
+        </section>
+      `;
+    })
     .join('');
 
   document.querySelectorAll('[data-save-mat]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-save-mat');
-      const costoMaterial = Number(document.getElementById(`mat-${id}`).value || 0);
-      const costoManoObra = Number(document.getElementById(`mo-${id}`).value || 0);
+      const matInput = document.getElementById(`mat-${id}`);
+      const moInput = document.getElementById(`mo-${id}`);
+      const isPct = matInput?.dataset.unit === 'pct';
+
+      const costoMaterialRaw = Number(matInput?.value || 0);
+      const costoManoObraRaw = Number(moInput?.value || 0);
+      const costoMaterial = isPct ? costoMaterialRaw / 100 : costoMaterialRaw;
+      const costoManoObra = isPct ? costoManoObraRaw / 100 : costoManoObraRaw;
+
       try {
         await adminRequest(`/api/integracion/appsheet/materiales/${id}`, {
           method: 'PATCH',
