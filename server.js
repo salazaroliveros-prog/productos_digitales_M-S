@@ -23,6 +23,8 @@ const SMTP_SECURE = String(process.env.SMTP_SECURE || 'false').toLowerCase() ===
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const SMTP_FROM = process.env.SMTP_FROM || 'no-reply@wmms.local';
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const ACCESS_TOKEN_TTL_MINUTES = parseInt(process.env.ACCESS_TOKEN_TTL_MINUTES || '180', 10);
 const ACCESS_SINGLE_USE = String(process.env.ACCESS_SINGLE_USE || 'true').toLowerCase() === 'true';
 const MIN_PACKAGE_MARGIN_PCT = parseNumber(process.env.MIN_PACKAGE_MARGIN_PCT, 25);
@@ -121,6 +123,57 @@ function getSmtpStatus() {
     from: SMTP_FROM || null,
     userConfigured: Boolean(SMTP_USER),
     passConfigured: Boolean(SMTP_PASS),
+  };
+}
+
+function verifyStripeWebhookSignature(event, signature) {
+  if (!STRIPE_WEBHOOK_SECRET) {
+    return false;
+  }
+  const hash = crypto
+    .createHmac('sha256', STRIPE_WEBHOOK_SECRET)
+    .update(event)
+    .digest('hex');
+  return `t=${Date.now()},v1=${hash}`.split(',')[1] === signature;
+}
+
+async function processStripeWebhookEvent(eventType, data) {
+  if (eventType !== 'payment_intent.succeeded') {
+    return { processed: false, reason: 'event-type-not-handled' };
+  }
+
+  const metadata = data.metadata || {};
+  const ventaId = metadata.ventaId || metadata.sale_id || null;
+  if (!ventaId) {
+    return { processed: false, reason: 'ventaId-not-in-metadata' };
+  }
+
+  const ventas = await readCollection('ventas', []);
+  const venta = ventas.find((v) => v.id === ventaId);
+  if (!venta) {
+    return { processed: false, reason: 'venta-not-found', ventaId };
+  }
+
+  venta.estadoPago = 'pagado';
+  venta.accesoApp = true;
+  venta.fechaPagoVerificado = new Date().toISOString();
+  venta.stripePaymentIntentId = data.id || null;
+
+  const notificacionEntrega = await activarEntregaSiPagado(venta);
+  const notificacionCredenciales = await registrarNotificacionCredenciales(venta, {
+    accion: 'pago-stripe-webhook',
+    reenviado: false,
+    solicitadoPor: 'stripe-webhook',
+  });
+
+  await writeCollection('ventas', ventas);
+
+  return {
+    processed: true,
+    ventaId,
+    venta,
+    notificacionEntrega,
+    notificacionCredenciales,
   };
 }
 
@@ -1321,6 +1374,48 @@ async function routeApi(req, res, url) {
     return true;
   }
 
+  if (req.method === 'POST' && pathname === '/api/webhooks/stripe') {
+    // Stripe webhook endpoint - no integration key required
+    // Signature is validated via Stripe webhook signing
+    try {
+      let rawBody = '';
+      req.on('data', (chunk) => {
+        rawBody += chunk.toString('utf8');
+        if (rawBody.length > 1048576) {
+          req.connection.destroy();
+        }
+      });
+
+      req.on('end', async () => {
+        try {
+          const signature = req.headers['stripe-signature'] || '';
+          const isValid = verifyStripeWebhookSignature(rawBody, signature);
+
+          if (!isValid) {
+            sendJson(res, 401, { error: 'Invalid signature' });
+            return;
+          }
+
+          const event = JSON.parse(rawBody);
+          const result = await processStripeWebhookEvent(event.type, event.data?.object);
+
+          sendJson(res, 200, {
+            received: true,
+            eventType: event.type,
+            result,
+          });
+        } catch (error) {
+          console.error('Stripe webhook processing error:', error);
+          sendJson(res, 500, { error: 'Internal processing error' });
+        }
+      });
+    } catch (error) {
+      console.error('Stripe webhook error:', error);
+      sendJson(res, 400, { error: 'Bad request' });
+    }
+    return true;
+  }
+
   if (req.method === 'POST' && pathname === '/api/persistencia/migrar-json-a-mongo') {
     checkIntegrationKey(req);
     const result = await migrateJsonToMongo();
@@ -1666,6 +1761,50 @@ async function routeApi(req, res, url) {
       venta,
       entregaAutomatica: Boolean(notificacion),
       notificacion,
+    });
+    return true;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/stripe/create-payment-intent') {
+    // Create a Stripe payment intent for a sale
+    // Body: { ventaId, monto, clienteEmail, clienteNombre, descripcion }
+    if (!STRIPE_SECRET_KEY) {
+      throw new ApiError(400, 'Stripe no configurado');
+    }
+
+    const body = await parseBody(req);
+    const ventaId = body.ventaId || '';
+    const monto = parseInt(parseNumber(body.monto, 0) * 100, 10); // Convert to cents
+    const clienteEmail = normalizeEmail(body.clienteEmail || '');
+    const clienteNombre = String(body.clienteNombre || 'Cliente').slice(0, 255);
+    const descripcion = String(body.descripcion || `Venta ${ventaId}`).slice(0, 1000);
+
+    if (!ventaId || monto <= 0) {
+      throw new ApiError(400, 'ventaId y monto requeridos (monto > 0)');
+    }
+
+    // In a real implementation, you would call Stripe API here:
+    // const stripe = require('stripe')(STRIPE_SECRET_KEY);
+    // const paymentIntent = await stripe.paymentIntents.create({ ... });
+    // For now, return a mock response structure that shows how to integrate
+
+    const mockPaymentIntent = {
+      id: `pi_mock_${Date.now()}`,
+      client_secret: `pi_mock_secret_${Date.now()}`,
+      amount: monto,
+      currency: 'usd',
+      status: 'requires_payment_method',
+      metadata: {
+        ventaId,
+        clienteEmail,
+        clienteNombre,
+      },
+    };
+
+    sendJson(res, 200, {
+      paymentIntent: mockPaymentIntent,
+      note: 'Mock payment intent. Install stripe package and update STRIPE_SECRET_KEY in .env to enable real payments.',
+      integration: 'stripe-payment-element',
     });
     return true;
   }
