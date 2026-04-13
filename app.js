@@ -15,6 +15,8 @@ const state = {
   },
 };
 
+const debounceTimers = {};
+
 const el = {
   catalogo: document.getElementById('catalogo-grid'),
   dashboard: document.getElementById('dashboard-grid'),
@@ -140,6 +142,14 @@ function renderCatalogo() {
       const value = Number(target.value);
       const areaLabel = document.getElementById(`area-value-${disenoId}`);
       areaLabel.textContent = `${value} m2`;
+
+      const diseno = state.disenos.find((item) => item.id === disenoId);
+      if (!diseno || diseno.bloqueado) return;
+
+      clearTimeout(debounceTimers[disenoId]);
+      debounceTimers[disenoId] = setTimeout(() => {
+        cotizar(disenoId, value);
+      }, 400);
     });
   });
 

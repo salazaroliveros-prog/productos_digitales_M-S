@@ -1196,6 +1196,16 @@ async function getMetricasNegocio(query = null) {
     }
     return true;
   });
+  const ventasPendientes = ventas.filter((venta) => {
+    if (normalizePagoStatus(venta.estadoPago) !== 'pendiente') return false;
+    const fecha = normalizeDateOnly(venta.fecha) || '';
+    if (desde && fecha < desde) return false;
+    if (hasta && fecha > hasta) return false;
+    return true;
+  });
+  const montoPipeline = ventasPendientes.reduce((acc, v) => acc + parseNumber(v.monto, 0), 0);
+  const totalVentasEnRango = ventasPagadas.length + ventasPendientes.length;
+
   const margenPorVenta = ventasPagadas.map((venta) => {
     const diseno = disenosMap[venta.disenoId] || null;
     const costos = diseno ? calcularCostoBaseDiseno(diseno, materiales) : { costoMaterial: 0, costoManoObra: 0 };
@@ -1269,6 +1279,15 @@ async function getMetricasNegocio(query = null) {
       enviosCredenciales: notificacionesCredenciales.length,
       reenviosCredenciales: reenviosCredenciales.length,
       enviosCredencialesReales: enviosCredencialesReales.length,
+      ventasPendientes: ventasPendientes.length,
+      montoPipeline: Number(montoPipeline.toFixed(2)),
+      tasaConversion: totalVentasEnRango > 0 ? Number(((ventasPagadas.length / totalVentasEnRango) * 100).toFixed(2)) : 0,
+      ticketPromedio: ventasPagadas.length > 0 ? Number((ingresosPagados / ventasPagadas.length).toFixed(2)) : 0,
+      ventasPorCanal: ventasPagadas.reduce((acc, v) => {
+        const canal = v.canal || 'Sin canal';
+        acc[canal] = (acc[canal] || 0) + 1;
+        return acc;
+      }, {}),
       rango: {
         desde: desde || null,
         hasta: hasta || null,
@@ -1307,7 +1326,7 @@ async function enrichPaquetes(paquetes = []) {
     });
 
     const precioLista = detalle.reduce((acc, row) => acc + row.subtotal, 0);
-    const descuentoPct = Math.max(0, parseNumber(paquete.descuentoPct, 0));
+    const descuentoPct = Math.min(100, Math.max(0, parseNumber(paquete.descuentoPct, 0)));
     const descuentoMonto = Number((precioLista * (descuentoPct / 100)).toFixed(2));
     const precioFinal = Number((precioLista - descuentoMonto).toFixed(2));
 
@@ -2092,8 +2111,17 @@ CONSTRUCTORA WM/M&S
 
   if (req.method === 'POST' && pathname === '/api/ventas') {
     const body = await parseBody(req);
-    const ventas = await readCollection('ventas', []);
+    const estadoPago = normalizePagoStatus(body.estadoPago);
+    if (!['pendiente', 'pagado'].includes(estadoPago)) {
+      throw new ApiError(400, 'estadoPago invalido. Valores permitidos: pendiente, pagado');
+    }
 
+    const monto = Number(body.monto || 0);
+    if (estadoPago === 'pagado' && monto <= 0) {
+      throw new ApiError(400, 'monto debe ser mayor a 0 para ventas pagadas');
+    }
+
+    const ventas = await readCollection('ventas', []);
     const venta = {
       id: `VTA-${Date.now()}`,
       fecha: new Date().toISOString(),
@@ -2101,12 +2129,20 @@ CONSTRUCTORA WM/M&S
       clienteEmail: body.clienteEmail || '',
       disenoId: body.disenoId || '',
       canal: body.canal || 'WhatsApp',
-      monto: Number(body.monto || 0),
-      estadoPago: normalizePagoStatus(body.estadoPago),
+      monto,
+      estadoPago,
       enlaceEntrega: body.enlaceEntrega || '',
     };
 
     const notificacion = await activarEntregaSiPagado(venta);
+    let notificacionCredenciales = null;
+    if (estadoPago === 'pagado') {
+      notificacionCredenciales = await registrarNotificacionCredenciales(venta, {
+        accion: 'pago-verificado',
+        reenviado: false,
+        solicitadoPor: 'api-ventas',
+      });
+    }
     ventas.push(venta);
     await writeCollection('ventas', ventas);
 
@@ -2114,6 +2150,7 @@ CONSTRUCTORA WM/M&S
       venta,
       entregaAutomatica: Boolean(notificacion),
       notificacion,
+      notificacionCredenciales,
     });
     return true;
   }
