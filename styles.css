@@ -1368,6 +1368,24 @@ textarea {
   margin: 0.3rem 0.7rem 0;
 }
 
+.calc-rates {
+  margin: 0.3rem 0.7rem;
+  border: 1px solid #d4deea;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.5rem;
+}
+
+.calc-rates p {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #425a72;
+}
+
+.calc-rates p + p {
+  margin-top: 0.2rem;
+}
+
 .package-grid-mobile {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1466,6 +1484,18 @@ textarea {
   padding: 0.8rem;
 }
 
+.chat-actions {
+  padding: 0.7rem 0.8rem 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.chat-actions p {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #4e647a;
+}
+
 .tablet-shell,
 .laptop-shell {
   background: rgba(255, 255, 255, 0.94);
@@ -1483,6 +1513,24 @@ textarea {
   margin-top: 0.2rem;
   color: #556b7f;
   font-size: 0.78rem;
+}
+
+.appsheet-formulas {
+  margin-top: 0.8rem;
+  border: 1px solid #d4deea;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 0.65rem;
+}
+
+.appsheet-formulas h3 {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.appsheet-formulas p {
+  margin: 0.35rem 0 0;
+  font-size: 0.76rem;
 }
 
 #appsheet-table input {
@@ -1504,6 +1552,34 @@ textarea {
   border-radius: 14px;
   background: #fff;
   padding: 0.7rem;
+}
+
+.dashboard-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.7rem;
+}
+
+.dashboard-kpi-strip article {
+  border: 1px solid #d3dbe6;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.55rem;
+}
+
+.dashboard-kpi-strip h4 {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #52687f;
+  text-transform: uppercase;
+}
+
+.dashboard-kpi-strip p {
+  margin: 0.25rem 0 0;
+  font-size: 1.2rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
 }
 
 .dash-card h3 {
@@ -1551,6 +1627,10 @@ textarea {
   font-size: 0.95rem;
 }
 
+.dash-admin-link {
+  margin-top: 0.85rem;
+}
+
 .btn.success {
   background: #1e9a4a;
   color: #fff;
@@ -1563,7 +1643,8 @@ textarea {
 
 @media (max-width: 900px) {
   .package-grid-mobile,
-  .dashboard-cards {
+  .dashboard-cards,
+  .dashboard-kpi-strip {
     grid-template-columns: 1fr;
   }
 

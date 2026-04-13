@@ -109,6 +109,8 @@ async function updateCalculatorQuote() {
   const materialValue = getById('calc-materiales');
   const manoObraValue = getById('calc-mano-obra');
   const totalValue = getById('calc-total');
+  const rateMatValue = getById('calc-rate-mat');
+  const rateMoValue = getById('calc-rate-mo');
 
   if (!diseno || !slider || !areaValue || !materialValue || !manoObraValue || !totalValue) return;
 
@@ -124,6 +126,10 @@ async function updateCalculatorQuote() {
     materialValue.textContent = gtq.format(quote.totalMateriales || 0);
     manoObraValue.textContent = gtq.format(quote.totalManoObra || 0);
     totalValue.textContent = gtq.format(quote.total || 0);
+    if (area > 0 && rateMatValue && rateMoValue) {
+      rateMatValue.textContent = gtq.format((quote.totalMateriales || 0) / area);
+      rateMoValue.textContent = gtq.format((quote.totalManoObra || 0) / area);
+    }
   } catch (error) {
     showMiniToast(error.message, true);
   }
@@ -202,6 +208,7 @@ function setupPaymentScreen() {
   const packageInfo = getById('pago-paquete');
   const form = getById('pago-form');
   const selected = getSelectedPackage();
+  const waBtn = getById('pago-open-whatsapp');
 
   if (packageInfo) {
     if (selected) {
@@ -214,6 +221,12 @@ function setupPaymentScreen() {
   }
 
   if (!form) return;
+
+  waBtn?.addEventListener('click', () => {
+    const packageText = selected ? `${selected.name} ${gtq.format(selected.price)}` : 'paquete seleccionado';
+    const message = encodeURIComponent(`Pago WM/M&S: comparto mi comprobante para ${packageText}.`);
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -280,6 +293,27 @@ function setupAppSheetScreen() {
 
 function setupDashboardScreen() {
   const validateButton = getById('dash-validate-carlos');
+  const ingresos = getById('dash-kpi-ingresos');
+  const leads = getById('dash-kpi-leads');
+  const ventas = getById('dash-kpi-ventas');
+  const bars = Array.from(document.querySelectorAll('.bars span'));
+
+  apiRequest('/api/dashboard')
+    .then((data) => {
+      if (ingresos) ingresos.textContent = gtq.format(data.ingresos || 0);
+      if (leads) leads.textContent = String(data.totalLeads || 0);
+      if (ventas) ventas.textContent = String(data.totalVentas || 0);
+
+      const monthlySeed = [44, 52, 48, 61, 57, 73];
+      const scale = Math.max(1, (data.totalVentas || 1) / 6);
+      bars.forEach((bar, idx) => {
+        const value = Math.min(95, Math.round(monthlySeed[idx] + scale * 2));
+        bar.style.height = `${value}%`;
+      });
+    })
+    .catch(() => {
+    });
+
   if (!validateButton) return;
 
   validateButton.addEventListener('click', () => {

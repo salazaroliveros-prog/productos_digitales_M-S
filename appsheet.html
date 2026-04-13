@@ -64,6 +64,13 @@
           </tr>
         </tbody>
       </table>
+
+      <section class="appsheet-formulas">
+        <h3>Formulas sugeridas en AppSheet</h3>
+        <p><strong>Balance Actual:</strong> SUM([Entradas]) - SUM([Salidas])</p>
+        <p><strong>Alerta de Stock Bajo:</strong> IF([Balance Actual] &lt; 10, "⚠️ LOW", "✅ OK")</p>
+        <p><strong>Filtro de Diseno:</strong> SELECT(Precios_Materiales[Costo], [ID_Material] = [_THISROW].[ID_Material])</p>
+      </section>
     </section>
   </main>
 
