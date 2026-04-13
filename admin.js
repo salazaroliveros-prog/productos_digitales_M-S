@@ -1,6 +1,7 @@
 const state = {
   session: null,
   inventarioRows: [],
+  comprobantesRows: [],
   historialRows: [],
   historialView: {
     sortKey: 'fecha',
@@ -38,6 +39,9 @@ const el = {
   topDisenos: document.getElementById('admin-top-disenos'),
   consultas: document.getElementById('admin-consultas'),
   leads: document.getElementById('admin-leads'),
+  comprobantes: document.getElementById('admin-comprobantes'),
+  compSummary: document.getElementById('comp-summary'),
+  compRefresh: document.getElementById('comp-refresh'),
   metDesde: document.getElementById('met-desde'),
   metHasta: document.getElementById('met-hasta'),
   refresh: document.getElementById('admin-refresh'),
@@ -120,6 +124,10 @@ function createRealtimeSnapshot(metricas = {}, leads = []) {
   return {
     cotizacionesCliente: Number(resumen.cotizacionesCliente || 0),
     topLeadId: Array.isArray(leads) && leads.length > 0 ? String(leads[0].id || 'none') : 'none',
+    topComprobanteId:
+      Array.isArray(state.comprobantesRows) && state.comprobantesRows.length > 0
+        ? String(state.comprobantesRows[0].id || 'none')
+        : 'none',
   };
 }
 
@@ -127,7 +135,8 @@ function shouldActivateFastMode(previousSnapshot, currentSnapshot) {
   if (!previousSnapshot || !currentSnapshot) return false;
   const hasNewLead = currentSnapshot.topLeadId !== previousSnapshot.topLeadId;
   const hasNewQuote = currentSnapshot.cotizacionesCliente > previousSnapshot.cotizacionesCliente;
-  return hasNewLead || hasNewQuote;
+  const hasNewComprobante = currentSnapshot.topComprobanteId !== previousSnapshot.topComprobanteId;
+  return hasNewLead || hasNewQuote || hasNewComprobante;
 }
 
 function getFastModeReason(previousSnapshot, currentSnapshot) {
@@ -135,8 +144,12 @@ function getFastModeReason(previousSnapshot, currentSnapshot) {
 
   const hasNewLead = currentSnapshot.topLeadId !== previousSnapshot.topLeadId;
   const hasNewQuote = currentSnapshot.cotizacionesCliente > previousSnapshot.cotizacionesCliente;
+  const hasNewComprobante = currentSnapshot.topComprobanteId !== previousSnapshot.topComprobanteId;
 
   if (hasNewLead && hasNewQuote) return 'nuevo lead y nueva cotizacion';
+  if (hasNewComprobante && hasNewLead) return 'nuevo comprobante y lead';
+  if (hasNewComprobante) return 'nuevo comprobante';
+
   if (hasNewLead) return 'nuevo lead';
   if (hasNewQuote) return 'nueva cotizacion';
   return '';
@@ -166,7 +179,7 @@ async function refreshRealtimeTick() {
 
   state.realtime.inFlight = true;
   try {
-    const [, metricas, leads] = await Promise.all([loadVentas(), loadMetricas(), loadLeads()]);
+    const [, metricas, leads] = await Promise.all([loadVentas(), loadMetricas(), loadLeads(), loadComprobantes()]);
     const snapshot = createRealtimeSnapshot(metricas, leads);
     const fastModeReason = getFastModeReason(state.realtime.lastSignature, snapshot);
 
@@ -980,6 +993,106 @@ function renderLeads(leads = []) {
   `;
 }
 
+function normalizeComprobanteEstado(value) {
+  const estado = String(value || '').toLowerCase();
+  if (estado.includes('valid')) return 'validado';
+  if (estado.includes('rechaz')) return 'rechazado';
+  return 'pendiente-validacion';
+}
+
+function renderComprobantes(rows = []) {
+  state.comprobantesRows = Array.isArray(rows) ? rows : [];
+  const all = state.comprobantesRows;
+  const pendientes = all.filter((item) => normalizeComprobanteEstado(item.estado) === 'pendiente-validacion').length;
+  const validados = all.filter((item) => normalizeComprobanteEstado(item.estado) === 'validado').length;
+  const rechazados = all.filter((item) => normalizeComprobanteEstado(item.estado) === 'rechazado').length;
+
+  if (el.compSummary) {
+    el.compSummary.innerHTML = [
+      { label: 'Total', value: all.length },
+      { label: 'Pendientes', value: pendientes },
+      { label: 'Validados', value: validados },
+      { label: 'Rechazados', value: rechazados },
+    ]
+      .map(
+        (card) => `
+        <article class="metric">
+          <h4>${card.label}</h4>
+          <p>${card.value}</p>
+        </article>
+      `
+      )
+      .join('');
+  }
+
+  if (!el.comprobantes) return;
+  if (!all.length) {
+    el.comprobantes.innerHTML = '<p>No hay comprobantes cargados.</p>';
+    return;
+  }
+
+  const body = all
+    .slice(0, 30)
+    .map((item) => {
+      const estado = normalizeComprobanteEstado(item.estado);
+      return `
+      <tr>
+        <td>${escapeHtml((item.fecha || '').replace('T', ' ').slice(0, 16))}</td>
+        <td>${escapeHtml(item.id || '')}</td>
+        <td>${escapeHtml(item.nombre || '')}</td>
+        <td>${escapeHtml(item.telefono || '')}</td>
+        <td>${escapeHtml(item.paqueteNombre || item.paqueteId || '-')}</td>
+        <td><span class="status-pill ${estado === 'validado' ? 'ok' : estado === 'rechazado' ? 'error' : 'warn'}">${escapeHtml(estado)}</span></td>
+        <td>
+          <div class="inline-actions">
+            <button type="button" class="btn success" data-comp-action="validar" data-comp-id="${escapeHtml(item.id)}">VALIDAR</button>
+            <button type="button" class="btn danger" data-comp-action="rechazar" data-comp-id="${escapeHtml(item.id)}">RECHAZAR</button>
+          </div>
+        </td>
+      </tr>
+    `;
+    })
+    .join('');
+
+  el.comprobantes.innerHTML = `
+    <table class="admin-table">
+      <thead>
+        <tr><th>Fecha</th><th>ID</th><th>Cliente</th><th>Telefono</th><th>Paquete</th><th>Estado</th><th>Accion</th></tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>
+  `;
+}
+
+async function loadComprobantes() {
+  const data = await adminRequest('/api/integracion/appsheet/comprobantes');
+  renderComprobantes(data);
+  return data;
+}
+
+async function updateComprobanteEstado(comprobanteId, estado) {
+  const current = state.comprobantesRows.find((item) => item.id === comprobanteId);
+  if (!current) {
+    throw new Error('Comprobante no encontrado');
+  }
+
+  const notas = prompt(`Notas para ${estado} (${comprobanteId})`, '') || '';
+  const ventaId = prompt('Venta ID relacionada (opcional, para activar entrega):', current.ventaId || '') || '';
+
+  await adminRequest(`/api/integracion/appsheet/comprobantes/${encodeURIComponent(comprobanteId)}/validar`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      estado,
+      validadoPor: state.session?.username || 'admin-web',
+      notas,
+      ventaId,
+    }),
+  });
+
+  await loadComprobantes();
+  showToast(`Comprobante ${comprobanteId} actualizado: ${estado}`);
+}
+
 async function loadLeads() {
   const leads = await adminRequest('/api/integracion/appsheet/leads');
   renderLeads(leads);
@@ -1032,6 +1145,7 @@ async function connectAdmin() {
       loadVentas(),
       loadMetricas(),
       loadLeads(),
+      loadComprobantes(),
       loadHistorial(),
       loadPaquetes(),
       loadSmtpStatus(),
@@ -1073,6 +1187,34 @@ el.disenoForm.addEventListener('submit', async (event) => {
 });
 
 el.refresh.addEventListener('click', loadMetricas);
+el.compRefresh?.addEventListener('click', async () => {
+  try {
+    await loadComprobantes();
+    showToast('Comprobantes actualizados');
+  } catch (error) {
+    showToast(error.message, true);
+  }
+});
+el.comprobantes?.addEventListener('click', async (event) => {
+  const target = event.target.closest('[data-comp-action]');
+  if (!target) return;
+
+  const action = target.getAttribute('data-comp-action');
+  const comprobanteId = target.getAttribute('data-comp-id');
+  if (!comprobanteId) return;
+
+  try {
+    if (action === 'validar') {
+      await updateComprobanteEstado(comprobanteId, 'validado');
+      return;
+    }
+    if (action === 'rechazar') {
+      await updateComprobanteEstado(comprobanteId, 'rechazado');
+    }
+  } catch (error) {
+    showToast(error.message, true);
+  }
+});
 el.invAdjustApply?.addEventListener('click', async () => {
   try {
     await applyAnnualInventoryAdjustment();

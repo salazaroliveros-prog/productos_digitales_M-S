@@ -747,6 +747,12 @@ label,
   background: var(--surface-low);
 }
 
+.btn.danger {
+  background: #b91c1c;
+  color: #fff;
+  border-color: transparent;
+}
+
 .forms {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -905,6 +911,12 @@ textarea {
   border: 1px solid #d5e0ea;
   padding: 0.38rem 0.42rem;
   text-align: left;
+}
+
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .admin-table th {
