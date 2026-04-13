@@ -42,6 +42,9 @@ const el = {
   comprobantes: document.getElementById('admin-comprobantes'),
   compSummary: document.getElementById('comp-summary'),
   compRefresh: document.getElementById('comp-refresh'),
+  compPreviewModal: document.getElementById('comp-preview-modal'),
+  compPreviewBody: document.getElementById('comp-preview-body'),
+  compPreviewClose: document.getElementById('comp-preview-close'),
   metDesde: document.getElementById('met-desde'),
   metHasta: document.getElementById('met-hasta'),
   refresh: document.getElementById('admin-refresh'),
@@ -1000,6 +1003,39 @@ function normalizeComprobanteEstado(value) {
   return 'pendiente-validacion';
 }
 
+function closeComprobantePreview() {
+  if (!el.compPreviewModal || !el.compPreviewBody) return;
+  el.compPreviewBody.innerHTML = '';
+  el.compPreviewModal.classList.add('hidden');
+}
+
+function openComprobantePreview(path, mimeType) {
+  if (!el.compPreviewModal || !el.compPreviewBody) return;
+
+  const cleanPath = String(path || '').trim().replace(/\\/g, '/');
+  if (!cleanPath) {
+    showToast('Comprobante sin ruta de archivo', true);
+    return;
+  }
+
+  const safeUrl = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+  const type = String(mimeType || '').toLowerCase();
+
+  if (type.includes('pdf') || safeUrl.toLowerCase().endsWith('.pdf')) {
+    el.compPreviewBody.innerHTML = `
+      <iframe src="${encodeURI(safeUrl)}" title="Vista previa PDF" class="comp-preview-frame"></iframe>
+      <p><a href="${encodeURI(safeUrl)}" target="_blank" rel="noreferrer noopener">Abrir PDF en nueva pestana</a></p>
+    `;
+  } else {
+    el.compPreviewBody.innerHTML = `
+      <img src="${encodeURI(safeUrl)}" alt="Comprobante" class="comp-preview-image" />
+      <p><a href="${encodeURI(safeUrl)}" target="_blank" rel="noreferrer noopener">Abrir imagen en nueva pestana</a></p>
+    `;
+  }
+
+  el.compPreviewModal.classList.remove('hidden');
+}
+
 function renderComprobantes(rows = []) {
   state.comprobantesRows = Array.isArray(rows) ? rows : [];
   const all = state.comprobantesRows;
@@ -1045,6 +1081,7 @@ function renderComprobantes(rows = []) {
         <td><span class="status-pill ${estado === 'validado' ? 'ok' : estado === 'rechazado' ? 'error' : 'warn'}">${escapeHtml(estado)}</span></td>
         <td>
           <div class="inline-actions">
+            <button type="button" class="btn ghost" data-comp-preview="1" data-comp-path="${encodeURIComponent(item.filePath || '')}" data-comp-mime="${encodeURIComponent(item.mimeType || '')}">VER</button>
             <button type="button" class="btn success" data-comp-action="validar" data-comp-id="${escapeHtml(item.id)}">VALIDAR</button>
             <button type="button" class="btn danger" data-comp-action="rechazar" data-comp-id="${escapeHtml(item.id)}">RECHAZAR</button>
           </div>
@@ -1195,7 +1232,21 @@ el.compRefresh?.addEventListener('click', async () => {
     showToast(error.message, true);
   }
 });
+el.compPreviewClose?.addEventListener('click', closeComprobantePreview);
+el.compPreviewModal?.addEventListener('click', (event) => {
+  if (event.target === el.compPreviewModal) {
+    closeComprobantePreview();
+  }
+});
 el.comprobantes?.addEventListener('click', async (event) => {
+  const preview = event.target.closest('[data-comp-preview]');
+  if (preview) {
+    const path = decodeURIComponent(preview.getAttribute('data-comp-path') || '');
+    const mime = decodeURIComponent(preview.getAttribute('data-comp-mime') || '');
+    openComprobantePreview(path, mime);
+    return;
+  }
+
   const target = event.target.closest('[data-comp-action]');
   if (!target) return;
 
