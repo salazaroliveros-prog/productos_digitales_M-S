@@ -13,6 +13,7 @@ const el = {
   metricas: document.getElementById('admin-metricas'),
   topDisenos: document.getElementById('admin-top-disenos'),
   consultas: document.getElementById('admin-consultas'),
+  leads: document.getElementById('admin-leads'),
   metDesde: document.getElementById('met-desde'),
   metHasta: document.getElementById('met-hasta'),
   refresh: document.getElementById('admin-refresh'),
@@ -209,6 +210,12 @@ function renderKpis(resumen = {}) {
     { label: 'Tasa conversion',      value: `${Number(resumen.tasaConversion || 0).toFixed(1)}%` },
     { label: 'Ticket promedio',      value: `Q${Number(resumen.ticketPromedio || 0).toFixed(2)}` },
     { label: 'Consultas registradas',value: resumen.consultasRegistradas ?? 0 },
+    { label: 'Vistas de pagina',     value: resumen.vistasPagina ?? 0 },
+    { label: 'Cotizaciones cliente', value: resumen.cotizacionesCliente ?? 0 },
+    { label: 'Clicks WhatsApp',      value: resumen.clicksWhatsapp ?? 0 },
+    { label: 'Registros cliente',    value: resumen.registrosCliente ?? 0 },
+    { label: 'Accesos cliente',      value: resumen.accesosCliente ?? 0 },
+    { label: 'Leads comerciales',    value: resumen.leadsComerciales ?? 0 },
     { label: 'Envios credenciales',  value: resumen.enviosCredenciales ?? 0 },
     { label: 'Reenvios credenciales',value: resumen.reenviosCredenciales ?? 0 },
     { label: 'Envios SMTP reales',   value: resumen.enviosCredencialesReales ?? 0 },
@@ -388,7 +395,10 @@ async function loadMetricas() {
       (q) => `
       <tr>
         <td>${(q.fecha || '').replace('T', ' ').slice(0, 16)}</td>
+        <td>${q.evento || ''}</td>
         <td>${q.disenoId || ''}</td>
+        <td>${q.detalle || '-'}</td>
+        <td>${q.areaM2 || '-'}</td>
         <td>${q.canal || ''}</td>
         <td>${q.origen || ''}</td>
         <td>${q.clienteEmail || '-'}</td>
@@ -400,11 +410,48 @@ async function loadMetricas() {
   el.consultas.innerHTML = `
     <table class="admin-table">
       <thead>
-        <tr><th>Fecha</th><th>Diseno</th><th>Canal</th><th>Origen</th><th>Cliente</th></tr>
+        <tr><th>Fecha</th><th>Evento</th><th>Diseno</th><th>Detalle</th><th>Area</th><th>Canal</th><th>Origen</th><th>Cliente</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
+}
+
+function renderLeads(leads = []) {
+  if (!Array.isArray(leads) || leads.length === 0) {
+    el.leads.innerHTML = '<p>No hay leads recientes.</p>';
+    return;
+  }
+
+  const rows = leads
+    .slice(0, 20)
+    .map(
+      (lead) => `
+      <tr>
+        <td>${(lead.fecha || '').replace('T', ' ').slice(0, 16)}</td>
+        <td>${lead.nombre || ''}</td>
+        <td>${lead.email || '-'}</td>
+        <td>${lead.telefono || '-'}</td>
+        <td>${lead.interes || '-'}</td>
+        <td>${lead.estado || '-'}</td>
+      </tr>
+    `
+    )
+    .join('');
+
+  el.leads.innerHTML = `
+    <table class="admin-table">
+      <thead>
+        <tr><th>Fecha</th><th>Nombre</th><th>Email</th><th>Telefono</th><th>Interes</th><th>Estado</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+async function loadLeads() {
+  const leads = await adminRequest('/api/integracion/appsheet/leads');
+  renderLeads(leads);
 }
 
 async function loadHistorial() {
@@ -445,7 +492,7 @@ async function connectAdmin() {
     state.session = session;
     el.authStatus.textContent = `Sesion activa: ${session.username}`;
     setAdminLockState(true);
-    await Promise.all([loadInventario(), loadVentas(), loadMetricas(), loadHistorial(), loadPaquetes(), loadSmtpStatus()]);
+    await Promise.all([loadInventario(), loadVentas(), loadMetricas(), loadLeads(), loadHistorial(), loadPaquetes(), loadSmtpStatus()]);
     showToast('Back-office conectado');
   } catch (error) {
     state.session = null;

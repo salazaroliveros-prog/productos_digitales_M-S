@@ -179,7 +179,7 @@ function renderCatalogo() {
   });
 
   document.querySelectorAll('.btn-whatsapp').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const disenoId = button.dataset.disenoId;
       const diseno = state.disenos.find((item) => item.id === disenoId);
       if (diseno?.bloqueado) {
@@ -192,17 +192,32 @@ function renderCatalogo() {
       const text = encodeURIComponent(
         `Hola CONSTRUCTORA WM/M&S, me interesa ${diseno.nombre}. Total estimado: ${total}. Quiero informacion para continuar.`
       );
+      await sendTelemetry({
+        disenoId,
+        evento: 'click-whatsapp',
+        detalle: `Intento de contacto por WhatsApp para ${diseno.nombre}`,
+        origen: 'catalogo',
+        canal: 'WhatsApp',
+        areaM2: Number(document.getElementById(`area-${disenoId}`)?.value || 0),
+      }, true);
       window.open(`https://wa.me/?text=${text}`, '_blank');
     });
   });
 
   document.querySelectorAll('[data-lead-diseno]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const disenoId = button.dataset.leadDiseno;
       const diseno = state.disenos.find((item) => item.id === disenoId);
       if (!diseno) {
         return;
       }
+      await sendTelemetry({
+        disenoId: diseno.id,
+        evento: 'ver-detalles',
+        detalle: `Apertura de detalle para ${diseno.nombre}`,
+        origen: 'catalogo',
+        canal: 'Web',
+      }, true);
       const params = new URLSearchParams({
         disenoId: diseno.id,
         interes: diseno.categoria || '',
@@ -222,6 +237,23 @@ function updateQuoteView(disenoId, quote) {
     <div><span>Mano de obra</span><strong>${currency.format(quote.totalManoObra)}</strong></div>
     <div class="total"><span>Total</span><strong>${currency.format(quote.total)}</strong></div>
   `;
+}
+
+async function sendTelemetry(payload = {}, useKeepalive = false) {
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.session.token) {
+      headers.Authorization = `Bearer ${state.session.token}`;
+    }
+
+    await fetch('/api/telemetria/consulta', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      keepalive: useKeepalive,
+    });
+  } catch (_error) {
+  }
 }
 
 async function cotizar(disenoId, areaM2) {
@@ -412,6 +444,12 @@ async function bootstrap() {
     await request('/api/health');
     await refreshSessionFromToken();
     await Promise.all([loadDisenos(), loadDashboard()]);
+    await sendTelemetry({
+      evento: 'vista-pagina',
+      detalle: window.location.pathname.replace('/', '') || 'index.html',
+      origen: window.location.pathname.replace('/', '') || 'index',
+      canal: 'Web',
+    }, true);
     hydrateLeadFormFromQuery();
     bindForms();
     showToast('Sistema listo: CONSTRUCTORA WM/M&S');

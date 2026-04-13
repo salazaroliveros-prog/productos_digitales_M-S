@@ -1128,6 +1128,9 @@ async function registrarConsulta(payload = {}) {
     id: `QRY-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     fecha: new Date().toISOString(),
     disenoId: payload.disenoId || '',
+    evento: payload.evento || 'consulta',
+    detalle: payload.detalle || '',
+    areaM2: parseNumber(payload.areaM2, 0),
     canal: payload.canal || 'Web',
     origen: payload.origen || 'web',
     clienteEmail: normalizeEmail(payload.clienteEmail || ''),
@@ -1248,7 +1251,16 @@ async function getMetricasNegocio(query = null) {
     .slice(0, 30);
 
   const rankingInteres = consultasFiltradas.reduce((acc, item) => {
-    const key = item.disenoId || 'sin-diseno';
+    if (!item.disenoId) {
+      return acc;
+    }
+    const key = item.disenoId;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const interaccionesPorEvento = consultasFiltradas.reduce((acc, item) => {
+    const key = item.evento || 'consulta';
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
@@ -1288,6 +1300,12 @@ async function getMetricasNegocio(query = null) {
         acc[canal] = (acc[canal] || 0) + 1;
         return acc;
       }, {}),
+      vistasPagina: interaccionesPorEvento['vista-pagina'] || 0,
+      cotizacionesCliente: interaccionesPorEvento.cotizacion || 0,
+      clicksWhatsapp: interaccionesPorEvento['click-whatsapp'] || 0,
+      registrosCliente: interaccionesPorEvento['registro-cliente'] || 0,
+      accesosCliente: interaccionesPorEvento['login-cliente'] || 0,
+      leadsComerciales: interaccionesPorEvento['lead-comercial'] || 0,
       rango: {
         desde: desde || null,
         hasta: hasta || null,
@@ -1798,6 +1816,14 @@ async function routeApi(req, res, url) {
     }
 
     const token = buildToken(email);
+    await registrarConsulta({
+      evento: 'login-cliente',
+      detalle: 'Ingreso con correo aprobado',
+      canal: body.canal || 'Web',
+      origen: 'login',
+      clienteEmail: email,
+      tokenValido: true,
+    });
     sendJson(res, 200, {
       token,
       cliente: {
@@ -1860,6 +1886,14 @@ async function routeApi(req, res, url) {
     }
 
     await writeCollection('leads', leads);
+    await registrarConsulta({
+      evento: 'registro-cliente',
+      detalle: existeLead ? 'Registro actualizado' : 'Nuevo pre-registro',
+      canal: body.canal || 'Web Registro',
+      origen: 'registro',
+      clienteEmail: email,
+      tokenValido: false,
+    });
     sendJson(res, 201, {
       ok: true,
       registro: 'lead-creado',
@@ -2061,6 +2095,9 @@ CONSTRUCTORA WM/M&S
 
     await registrarConsulta({
       disenoId: body.disenoId,
+      evento: 'cotizacion',
+      detalle: 'Calculo de presupuesto',
+      areaM2: body.areaM2,
       canal: body.canal || 'Web',
       origen: 'cotizador',
       clienteEmail: authContext.email || body.clienteEmail || '',
@@ -2073,12 +2110,15 @@ CONSTRUCTORA WM/M&S
 
   if (req.method === 'POST' && pathname === '/api/telemetria/consulta') {
     const body = await parseBody(req);
-    if (!body.disenoId) {
-      throw new ApiError(400, 'disenoId requerido');
+    if (!body.disenoId && !body.evento) {
+      throw new ApiError(400, 'disenoId o evento requerido');
     }
 
     const consulta = await registrarConsulta({
       disenoId: body.disenoId,
+      evento: body.evento || 'consulta',
+      detalle: body.detalle || '',
+      areaM2: body.areaM2,
       canal: body.canal || 'Web',
       origen: body.origen || 'catalogo',
       clienteEmail: authContext.email || body.clienteEmail || '',
@@ -2105,6 +2145,14 @@ CONSTRUCTORA WM/M&S
     };
     leads.push(lead);
     await writeCollection('leads', leads);
+    await registrarConsulta({
+      evento: 'lead-comercial',
+      detalle: lead.interes || 'Lead comercial',
+      canal: lead.canal || 'Web',
+      origen: 'contacto',
+      clienteEmail: lead.email || '',
+      tokenValido: authContext.tokenValido,
+    });
     sendJson(res, 201, lead);
     return true;
   }
@@ -2519,6 +2567,19 @@ CONSTRUCTORA WM/M&S
   if (req.method === 'GET' && pathname === '/api/integracion/appsheet/metricas') {
     checkIntegrationKey(req);
     sendJson(res, 200, await getMetricasNegocio(query));
+    return true;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/integracion/appsheet/leads') {
+    checkIntegrationKey(req);
+    const leads = await readCollection('leads', []);
+    sendJson(
+      res,
+      200,
+      [...leads]
+        .sort((a, b) => new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime())
+        .slice(0, 30)
+    );
     return true;
   }
 
