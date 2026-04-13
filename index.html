@@ -3,110 +3,66 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CONSTRUCTORA WM/M&S - Plataforma Comercial</title>
+    <title>WM/M&S | Flujo Digital</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
 </head>
-<body class="public-body">
-    <header class="public-topbar">
-        <div class="container topbar-inner">
-            <div class="topbar-brand">
-                <span class="eyebrow">Catalogo Tecnico</span>
-                <h1>CONSTRUCTORA WM/M&S</h1>
+<body class="public-body flow-body" data-flow-screen="landing">
+    <header class="flow-header">
+        <div class="container flow-topbar">
+            <div>
+                <p class="flow-logo">WM/M&S</p>
+                <p class="flow-sub">CONSTRUYENDO EL FUTURO</p>
             </div>
-            <nav class="topbar-nav">
+            <nav class="flow-nav">
                 <a href="./index.html" class="is-current">Inicio</a>
-                <a href="./catalogo.html">Catalogo</a>
-                <a href="./login.html#acceso-aprobado">Acceso cliente</a>
-                <a href="./login.html#registro-nuevo">Registro</a>
-                <a href="./contacto.html">Contacto</a>
+                <a href="./calculadora.html">Calculador</a>
+                <a href="./paquetes.html">Paquetes</a>
+                <a href="./pago.html">Pago</a>
+                <a href="./appsheet.html">AppSheet</a>
+                <a href="./dashboard-vista.html">Dashboard</a>
             </nav>
         </div>
     </header>
 
-    <main class="public-main">
-        <section class="public-hero">
-            <div class="container hero-layout">
-                <div class="hero-copy">
-                    <span class="hero-badge">Arquitectura + control digital</span>
-                    <h2>Disenos, planos y aplicaciones con presupuesto tecnico en tiempo real.</h2>
-                    <p>
-                        Esta portada funciona como vitrina inicial. El catalogo, el acceso cliente, el registro y el contacto ahora viven en pantallas separadas para que cada flujo tenga su propio objetivo y no compita dentro de la misma vista.
-                    </p>
-                    <div class="hero-actions">
-                        <a class="btn primary" href="./catalogo.html">Explorar catalogo</a>
-                        <a class="btn ghost" href="./login.html#registro-nuevo">Registrar cliente</a>
-                    </div>
+    <main class="container flow-main">
+        <section class="flow-mobile-shell">
+            <div class="phone-frame">
+                <div class="phone-head">
+                    <h1>WM/M&S</h1>
+                    <p>Catalogo principal</p>
                 </div>
-
-                <div class="hero-visual shell-card">
-                    <div class="hero-visual-media"></div>
-                    <div class="hero-floating-note glass-panel">
-                        <span class="mini-label">Proyecto destacado</span>
-                        <strong>Sala de Billar Urbano</strong>
-                        <p>Presupuesto, aprobacion y entrega digital activables al confirmar pago.</p>
-                    </div>
-                </div>
+                <div id="landing-list" class="landing-list"></div>
             </div>
         </section>
 
-        <section class="container page-stack">
-            <section class="shell-section">
-                <div class="section-headline">
-                    <div>
-                        <span class="mini-label">Rutas principales</span>
-                        <h2>Donde llevar a cada cliente</h2>
-                        <p>Desde esta vista inicial cada boton abre una pantalla especifica, no una seccion dentro de la misma portada.</p>
-                    </div>
-                </div>
-                <div class="route-grid">
-                    <article class="route-card shell-card">
-                        <span class="mini-label">Pantalla 01</span>
-                        <h3>Catalogo</h3>
-                        <p>Explorar estilos de casas, modelos, software, cotizacion dinamica y consulta comercial.</p>
-                        <a class="btn primary" href="./catalogo.html">Ir al catalogo</a>
-                    </article>
-                    <article class="route-card shell-card">
-                        <span class="mini-label">Pantalla 02</span>
-                        <h3>Acceso cliente y registro</h3>
-                        <p>Los clientes aprobados ingresan con sus datos registrados. Los nuevos dejan aqui su solicitud de registro.</p>
-                        <a class="btn primary" href="./login.html#registro-nuevo">Abrir registro</a>
-                    </article>
-                    <article class="route-card shell-card">
-                        <span class="mini-label">Pantalla 03</span>
-                        <h3>Contacto comercial</h3>
-                        <p>Formulario directo para cotizaciones, seguimiento y atencion comercial.</p>
-                        <a class="btn primary" href="./contacto.html">Ir a contacto</a>
-                    </article>
-                </div>
-            </section>
-
-            <section class="shell-section dashboard-shell">
-                <div class="section-headline">
-                    <div>
-                        <span class="mini-label">Indicadores</span>
-                        <h2>Confianza comercial</h2>
-                    </div>
-                </div>
-                <div id="dashboard-grid" class="dashboard-grid"></div>
-            </section>
-
-            <section class="shell-section technical-note">
-                <span class="mini-label">Nota tecnica</span>
-                <p>
-                    Los productos premium se desbloquean solo para clientes aprobados y con compra pagada. La portada permanece como visualizacion inicial y cada accion principal redirige a su pantalla correspondiente.
-                </p>
-            </section>
+        <section class="flow-route-grid">
+            <a class="flow-route" href="./calculadora.html">
+                <h3>2. Calculador Dinamico</h3>
+                <p>M2 con desglose de materiales y mano de obra en tiempo real.</p>
+            </a>
+            <a class="flow-route" href="./paquetes.html">
+                <h3>3. Seleccion de Paquetes</h3>
+                <p>Comparativa BASICO, INTELIGENTE y PRO.</p>
+            </a>
+            <a class="flow-route" href="./pago.html">
+                <h3>4. Pago y Validacion</h3>
+                <p>Flujo chatbot para carga de comprobante.</p>
+            </a>
+            <a class="flow-route" href="./appsheet.html">
+                <h3>5. App de Cuantificacion</h3>
+                <p>Control tecnico de inventario diario para obra.</p>
+            </a>
+            <a class="flow-route" href="./dashboard-vista.html">
+                <h3>6. Dashboard Administrador</h3>
+                <p>Centro de mando para validar ventas y precios.</p>
+            </a>
         </section>
     </main>
 
-    <footer class="footer public-footer">
-        CONSTRUCTORA WM/M&S · Vitrina inicial de productos digitales y soluciones constructivas
-    </footer>
-
-    <div id="toast" class="toast"></div>
-    <script src="./app.js"></script>
+    <div id="flow-toast" class="toast"></div>
+    <script src="./flow.js"></script>
 </body>
 </html>

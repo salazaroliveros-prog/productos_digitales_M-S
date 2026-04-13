@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pago y Validacion | WM/M&S</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="public-body flow-body" data-flow-screen="pago">
+  <header class="flow-header">
+    <div class="container flow-topbar">
+      <div>
+        <p class="flow-logo">WM/M&S</p>
+        <p class="flow-sub">PAGO Y VALIDACION</p>
+      </div>
+      <nav class="flow-nav">
+        <a href="./index.html">Inicio</a>
+        <a href="./paquetes.html">Paquetes</a>
+        <a href="./pago.html" class="is-current">Pago</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container flow-main">
+    <section class="chat-phone-shell">
+      <div class="chat-top">
+        <h2>Chatbot de validacion</h2>
+        <p id="pago-paquete">Sin paquete seleccionado</p>
+      </div>
+
+      <div id="pago-chat" class="chat-body"></div>
+
+      <form id="pago-form" class="chat-upload-form">
+        <div class="field">
+          <label for="pago-nombre">Nombre</label>
+          <input id="pago-nombre" name="nombre" required />
+        </div>
+        <div class="field">
+          <label for="pago-email">Email</label>
+          <input id="pago-email" name="email" type="email" />
+        </div>
+        <div class="field">
+          <label for="pago-telefono">Telefono</label>
+          <input id="pago-telefono" name="telefono" required />
+        </div>
+        <div class="field">
+          <label for="pago-comprobante">Subir comprobante (imagen/PDF)</label>
+          <input id="pago-comprobante" name="comprobante" type="file" accept="image/*,.pdf" required />
+        </div>
+        <button class="btn primary" type="submit">ENVIAR</button>
+      </form>
+    </section>
+  </main>
+
+  <div id="flow-toast" class="toast"></div>
+  <script src="./flow.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculador Dinamico | WM/M&S</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="public-body flow-body" data-flow-screen="calculadora">
+  <header class="flow-header">
+    <div class="container flow-topbar">
+      <div>
+        <p class="flow-logo">WM/M&S</p>
+        <p class="flow-sub">CALCULADOR DINAMICO</p>
+      </div>
+      <nav class="flow-nav">
+        <a href="./index.html">Inicio</a>
+        <a href="./calculadora.html" class="is-current">Calculador</a>
+        <a href="./paquetes.html">Paquetes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container flow-main">
+    <section class="phone-frame calculator-frame">
+      <div class="phone-head">
+        <h1 id="calc-diseno">Diseno seleccionado</h1>
+        <p>Precios actualizados Jutiapa</p>
+      </div>
+
+      <div class="calc-counters">
+        <article>
+          <h4>MATERIALES</h4>
+          <strong id="calc-materiales">Q0.00</strong>
+        </article>
+        <article>
+          <h4>MANO DE OBRA</h4>
+          <strong id="calc-mano-obra">Q0.00</strong>
+        </article>
+      </div>
+
+      <div class="calc-total">
+        <span>Total estimado</span>
+        <strong id="calc-total">Q0.00</strong>
+      </div>
+
+      <div class="calc-slider-shell">
+        <div class="calc-slider-label">
+          <span>Area (m2)</span>
+          <span id="calc-area-value">120 m2</span>
+        </div>
+        <input id="calc-area" type="range" min="40" max="420" step="1" value="120" aria-label="Ajuste de area en metros cuadrados" />
+      </div>
+
+      <button id="go-packages" class="btn cta-orange" type="button">CONTINUAR A PAQUETES</button>
+    </section>
+  </main>
+
+  <div id="flow-toast" class="toast"></div>
+  <script src="./flow.js"></script>
+</body>
+</html>

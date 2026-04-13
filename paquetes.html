@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paquetes | WM/M&S</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="public-body flow-body" data-flow-screen="paquetes">
+  <header class="flow-header">
+    <div class="container flow-topbar">
+      <div>
+        <p class="flow-logo">WM/M&S</p>
+        <p class="flow-sub">SELECCION DE PAQUETES</p>
+      </div>
+      <nav class="flow-nav">
+        <a href="./index.html">Inicio</a>
+        <a href="./calculadora.html">Calculador</a>
+        <a href="./paquetes.html" class="is-current">Paquetes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container flow-main">
+    <section class="package-grid-mobile">
+      <article class="package-card">
+        <h3>BASICO</h3>
+        <p class="price">Q750</p>
+        <ul>
+          <li>Planos PDF</li>
+          <li>App de cuantificacion</li>
+          <li>Soporte inicial</li>
+        </ul>
+        <button class="btn cta-orange" data-package-id="PAQ-BASICO" data-package-name="BASICO" data-package-price="750" type="button">ELEGIR</button>
+      </article>
+
+      <article class="package-card highlight">
+        <h3>INTELIGENTE</h3>
+        <p class="price">Q1,500</p>
+        <ul>
+          <li>Planes PDF + app</li>
+          <li>Cuantificacion avanzada</li>
+          <li>Soporte VIP</li>
+        </ul>
+        <button class="btn cta-orange" data-package-id="PAQ-INTELIGENTE" data-package-name="INTELIGENTE" data-package-price="1500" type="button">ELEGIR</button>
+      </article>
+
+      <article class="package-card">
+        <h3>PRO</h3>
+        <p class="price">Q2,500</p>
+        <ul>
+          <li>Planos POF</li>
+          <li>Cuantificacion + reportes</li>
+          <li>Soporte maestro</li>
+        </ul>
+        <button class="btn cta-orange" data-package-id="PAQ-PRO" data-package-name="PRO" data-package-price="2500" type="button">ELEGIR</button>
+      </article>
+    </section>
+  </main>
+
+  <div id="flow-toast" class="toast"></div>
+  <script src="./flow.js"></script>
+</body>
+</html>

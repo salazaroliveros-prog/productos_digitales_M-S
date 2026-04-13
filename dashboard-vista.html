@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard WM/M&S | Centro de Mando</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="public-body flow-body" data-flow-screen="dashboard">
+  <header class="flow-header">
+    <div class="container flow-topbar">
+      <div>
+        <p class="flow-logo">WM/M&S</p>
+        <p class="flow-sub">DASHBOARD ADMINISTRADOR</p>
+      </div>
+      <nav class="flow-nav">
+        <a href="./index.html">Inicio</a>
+        <a href="./dashboard-vista.html" class="is-current">Dashboard</a>
+        <a href="./admin.html">Panel real</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container flow-main">
+    <section class="laptop-shell">
+      <div class="dashboard-cards">
+        <article class="dash-card">
+          <h3>VENTAS GTQ (Abril)</h3>
+          <div class="bars">
+            <span class="bar-h34"></span>
+            <span class="bar-h52"></span>
+            <span class="bar-h47"></span>
+            <span class="bar-h68"></span>
+            <span class="bar-h56"></span>
+            <span class="bar-h82"></span>
+          </div>
+        </article>
+        <article class="dash-card">
+          <h3>FLUCTUACION CEMENTO (Jutiapa)</h3>
+          <svg viewBox="0 0 260 110" class="line-chart" aria-label="Fluctuacion del cemento en Jutiapa">
+            <polyline points="8,80 50,76 92,72 134,70 176,60 218,66 252,62" />
+          </svg>
+        </article>
+      </div>
+
+      <div class="dash-table-shell">
+        <h3>Ultimas ventas</h3>
+        <table class="admin-table">
+          <thead>
+            <tr><th>Cliente</th><th>Estado</th><th>Fecha</th><th>Accion</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Carlos G.</td>
+              <td>Pendiente</td>
+              <td>Abr 2026</td>
+              <td><button id="dash-validate-carlos" class="btn success" type="button">VALIDAR</button></td>
+            </tr>
+            <tr><td>Ana S.</td><td>Pendiente</td><td>Abr 2026</td><td><button class="btn ghost" type="button">Revisar</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="flow-toast" class="toast"></div>
+  <script src="./flow.js"></script>
+</body>
+</html>
