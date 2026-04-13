@@ -90,6 +90,7 @@ label,
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .topbar-nav a:hover {
@@ -98,6 +99,18 @@ label,
 
 .topbar-nav a.is-current {
   color: var(--primary);
+  position: relative;
+}
+
+.topbar-nav a.is-current::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.35rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 .public-main {
@@ -386,6 +399,7 @@ label,
   align-self: stretch;
 }
 
+.contact-form-shell,
 .contact-form-large {
   align-self: stretch;
 }
@@ -870,6 +884,13 @@ textarea {
 
   .topbar-nav {
     gap: 0.8rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+  }
+
+  .topbar-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .catalog-sidebar {
@@ -890,8 +911,31 @@ textarea {
     padding-top: 1.2rem;
   }
 
+  .topbar-inner {
+    gap: 0.75rem;
+  }
+
+  .topbar-nav a {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid rgba(4, 21, 37, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .topbar-nav a.is-current::after {
+    display: none;
+  }
+
+  .topbar-brand h1 {
+    font-size: 1.1rem;
+  }
+
   .hero-copy h2 {
     font-size: 2rem;
+  }
+
+  .page-title {
+    font-size: 1.8rem;
   }
 
   .grid {
@@ -912,6 +956,12 @@ textarea {
 
   .two-col-forms {
     grid-template-columns: 1fr;
+  }
+
+  .route-card,
+  .shell-section,
+  .form-card {
+    padding: 0.9rem;
   }
 
   .btn {
