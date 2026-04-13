@@ -17,10 +17,10 @@
                 <h1>CONSTRUCTORA WM/M&S</h1>
             </div>
             <nav class="topbar-nav">
-                <a href="#catalogo-publico">Catalogo</a>
-                <a href="#acceso-cliente">Acceso cliente</a>
-                <a href="#registro-cliente">Registro</a>
-                <a href="#contacto-comercial">Contacto</a>
+                <a href="./catalogo.html">Catalogo</a>
+                <a href="./login.html#acceso-aprobado">Acceso cliente</a>
+                <a href="./login.html#registro-nuevo">Registro</a>
+                <a href="./contacto.html">Contacto</a>
             </nav>
         </div>
     </header>
@@ -32,11 +32,11 @@
                     <span class="hero-badge">Arquitectura + control digital</span>
                     <h2>Disenos, planos y aplicaciones con presupuesto tecnico en tiempo real.</h2>
                     <p>
-                        Explora soluciones listas para construir, cuantificar materiales y controlar tus proyectos desde una sola plataforma.
+                        Esta pantalla queda como vitrina inicial. El catalogo, el acceso cliente, el registro y el contacto ahora viven en pantallas separadas para que cada flujo tenga su propio destino.
                     </p>
                     <div class="hero-actions">
-                        <a class="btn primary" href="#catalogo-publico">Explorar catalogo</a>
-                        <a class="btn ghost" href="#registro-cliente">Solicitar acceso</a>
+                        <a class="btn primary" href="./catalogo.html">Explorar catalogo</a>
+                        <a class="btn ghost" href="./login.html#registro-nuevo">Registrar cliente</a>
                     </div>
                 </div>
 
@@ -45,151 +45,59 @@
                     <div class="hero-floating-note glass-panel">
                         <span class="mini-label">Proyecto destacado</span>
                         <strong>Sala de Billar Urbano</strong>
-                        <p>Presupuesto y entrega digital activables al confirmar pago.</p>
+                        <p>Presupuesto, aprobacion y entrega digital activables al confirmar pago.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="public-shell container">
-            <aside class="catalog-sidebar shell-card">
-                <div class="sidebar-block">
-                    <span class="mini-label">Lineas</span>
-                    <h3>Catalogo de precision</h3>
-                    <p>Visualiza productos publicos y activa premium cuando tu compra sea verificada.</p>
-                </div>
-
-                <div class="sidebar-block">
-                    <span class="mini-label">Categorias</span>
-                    <div class="category-stack">
-                        <button type="button" class="category-chip is-active">Residencial</button>
-                        <button type="button" class="category-chip">Software / ERP</button>
-                        <button type="button" class="category-chip">Consultoria</button>
+        <section class="container page-stack">
+            <section class="shell-section">
+                <div class="section-headline">
+                    <div>
+                        <span class="mini-label">Rutas principales</span>
+                        <h2>Donde llevar a cada cliente</h2>
+                        <p>Desde esta vista inicial cada boton abre una pantalla especifica, no una seccion dentro de la misma portada.</p>
                     </div>
                 </div>
-
-                <div class="sidebar-block sidebar-calculator">
-                    <span class="mini-label">Presupuesto dinamico</span>
-                    <p>Los precios de materiales y mano de obra se calculan segun el area y los costos vigentes.</p>
+                <div class="route-grid">
+                    <article class="route-card shell-card">
+                        <span class="mini-label">Pantalla 01</span>
+                        <h3>Catalogo</h3>
+                        <p>Ver estilos de casas, modelos, software, cotizacion dinamica y consulta por WhatsApp.</p>
+                        <a class="btn primary" href="./catalogo.html">Ir al catalogo</a>
+                    </article>
+                    <article class="route-card shell-card">
+                        <span class="mini-label">Pantalla 02</span>
+                        <h3>Acceso cliente y registro</h3>
+                        <p>Los clientes aprobados ingresan con sus datos registrados. Los nuevos dejan aqui su registro.</p>
+                        <a class="btn primary" href="./login.html#registro-nuevo">Abrir registro</a>
+                    </article>
+                    <article class="route-card shell-card">
+                        <span class="mini-label">Pantalla 03</span>
+                        <h3>Contacto comercial</h3>
+                        <p>Formulario completo para cotizaciones, seguimiento y atencion comercial.</p>
+                        <a class="btn primary" href="./contacto.html">Ir a contacto</a>
+                    </article>
                 </div>
-            </aside>
+            </section>
 
-            <div class="catalog-content">
-                <section id="catalogo-publico" class="shell-section">
-                    <div class="section-headline">
-                        <div>
-                            <span class="mini-label">Vista cliente</span>
-                            <h2>Catalogo de productos y servicios</h2>
-                            <p>Selecciona un modelo para revisar dimensiones, incluir presupuestos y activar contacto.</p>
-                        </div>
+            <section class="shell-section dashboard-shell">
+                <div class="section-headline">
+                    <div>
+                        <span class="mini-label">Indicadores</span>
+                        <h2>Confianza comercial</h2>
                     </div>
-                    <div id="catalogo-grid" class="catalog-grid surgical-grid"></div>
-                </section>
+                </div>
+                <div id="dashboard-grid" class="dashboard-grid"></div>
+            </section>
 
-                <section class="shell-section dashboard-shell">
-                    <div class="section-headline">
-                        <div>
-                            <span class="mini-label">Indicadores</span>
-                            <h2>Confianza comercial</h2>
-                        </div>
-                    </div>
-                    <div id="dashboard-grid" class="dashboard-grid"></div>
-                </section>
-
-                <section id="acceso-cliente" class="shell-section access-shell">
-                    <div class="section-headline">
-                        <div>
-                            <span class="mini-label">Clientes activos</span>
-                            <h2>Acceso cliente</h2>
-                        </div>
-                    </div>
-                    <div class="access-panel public-panel">
-                        <form id="access-form" class="inline-form">
-                            <div class="field">
-                                <label for="access-email">Email del cliente</label>
-                                <input id="access-email" name="email" type="email" placeholder="cliente@correo.com" required />
-                            </div>
-                            <button type="submit" class="btn primary">Ingresar</button>
-                            <button type="button" id="logout-btn" class="btn ghost">Salir</button>
-                        </form>
-                        <p id="access-status" class="access-status">Modo publico: solo contenido abierto.</p>
-                    </div>
-                </section>
-
-                <section id="registro-cliente" class="shell-section forms-shell">
-                    <div class="forms two-col-forms">
-                        <form id="register-form" class="form-card shell-card">
-                            <h3>Registro rapido de cliente</h3>
-                            <div class="field">
-                                <label for="register-nombre">Nombre</label>
-                                <input id="register-nombre" name="nombre" required />
-                            </div>
-                            <div class="field">
-                                <label for="register-email">Email</label>
-                                <input id="register-email" name="email" type="email" required />
-                            </div>
-                            <div class="field">
-                                <label for="register-telefono">Telefono / WhatsApp</label>
-                                <input id="register-telefono" name="telefono" />
-                            </div>
-                            <div class="field">
-                                <label for="register-interes">Interes</label>
-                                <select id="register-interes" name="interes">
-                                    <option>Disenos y planos</option>
-                                    <option>Software y apps</option>
-                                    <option>Consultoria</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn primary">Registrarme</button>
-                        </form>
-
-                        <form id="lead-form" class="form-card shell-card">
-                            <h3 id="contacto-comercial">Contacto comercial</h3>
-                            <div class="field">
-                                <label for="lead-nombre">Nombre</label>
-                                <input id="lead-nombre" name="nombre" required />
-                            </div>
-                            <div class="field">
-                                <label for="lead-email">Email</label>
-                                <input id="lead-email" name="email" type="email" />
-                            </div>
-                            <div class="field">
-                                <label for="lead-telefono">Telefono / WhatsApp</label>
-                                <input id="lead-telefono" name="telefono" required />
-                            </div>
-                            <div class="field">
-                                <label for="lead-canal">Canal</label>
-                                <select id="lead-canal" name="canal">
-                                    <option>Marketplace</option>
-                                    <option>WhatsApp</option>
-                                    <option>LinkedIn</option>
-                                    <option>Instagram</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label for="lead-interes">Interes</label>
-                                <select id="lead-interes" name="interes">
-                                    <option>Disenos y planos</option>
-                                    <option>Software y apps</option>
-                                    <option>Consultoria</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label for="lead-mensaje">Mensaje</label>
-                                <textarea id="lead-mensaje" name="mensaje" placeholder="Detalle del requerimiento"></textarea>
-                            </div>
-                            <button type="submit" class="btn primary">Enviar solicitud</button>
-                        </form>
-                    </div>
-                </section>
-
-                <section class="shell-section technical-note">
-                    <span class="mini-label">Nota tecnica</span>
-                    <p>
-                        Los productos premium se desbloquean con acceso cliente cuando la compra queda confirmada. Mientras tanto puedes cotizar, registrarte y dejar tu solicitud comercial.
-                    </p>
-                </section>
-            </div>
+            <section class="shell-section technical-note">
+                <span class="mini-label">Nota tecnica</span>
+                <p>
+                    Los productos premium se desbloquean solo para clientes aprobados y con compra pagada. La portada permanece como visualizacion inicial y cada accion principal redirige a su pantalla correspondiente.
+                </p>
+            </section>
         </section>
     </main>
 

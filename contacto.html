@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contacto | CONSTRUCTORA WM/M&S</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="public-body">
+    <header class="public-topbar">
+        <div class="container topbar-inner">
+            <div class="topbar-brand">
+                <span class="eyebrow">Pantalla Cliente</span>
+                <h1>CONSTRUCTORA WM/M&S</h1>
+            </div>
+            <nav class="topbar-nav">
+                <a href="./catalogo.html">Catalogo</a>
+                <a href="./login.html#acceso-aprobado">Acceso cliente</a>
+                <a href="./login.html#registro-nuevo">Registro</a>
+                <a href="./contacto.html" class="is-current">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="public-main">
+        <section class="public-hero compact-hero">
+            <div class="container split-shell">
+                <section class="shell-section">
+                    <span class="mini-label">Pantalla comercial</span>
+                    <h2 class="page-title">Contacto comercial</h2>
+                    <p class="page-copy">
+                        Usa esta pantalla para solicitudes, seguimiento y requerimientos especificos. Si vienes desde el catalogo, el producto seleccionado se precarga automaticamente en el formulario.
+                    </p>
+                    <div class="route-grid mini-route-grid">
+                        <article class="route-card shell-card">
+                            <span class="mini-label">Canal rapido</span>
+                            <h3>WhatsApp</h3>
+                            <p>Atencion para seguimiento, dudas de presupuesto y cierre comercial.</p>
+                            <a class="btn ghost" href="https://wa.me/?text=Hola%20CONSTRUCTORA%20WM%2FM%26S%2C%20necesito%20informacion%20comercial." target="_blank" rel="noreferrer noopener">Abrir WhatsApp</a>
+                        </article>
+                        <article class="route-card shell-card">
+                            <span class="mini-label">Siguiente paso</span>
+                            <h3>Registrar cliente</h3>
+                            <p>Si aun no tienes datos cargados, pasa a la pantalla de registro y aprobacion.</p>
+                            <a class="btn ghost" href="./login.html#registro-nuevo">Ir a registrar</a>
+                        </article>
+                    </div>
+                </section>
+
+                <form id="lead-form" class="form-card shell-card contact-form-shell">
+                    <h3>Enviar solicitud</h3>
+                    <div class="field">
+                        <label for="lead-nombre">Nombre</label>
+                        <input id="lead-nombre" name="nombre" required />
+                    </div>
+                    <div class="field">
+                        <label for="lead-email">Email</label>
+                        <input id="lead-email" name="email" type="email" />
+                    </div>
+                    <div class="field">
+                        <label for="lead-telefono">Telefono / WhatsApp</label>
+                        <input id="lead-telefono" name="telefono" required />
+                    </div>
+                    <div class="field">
+                        <label for="lead-canal">Canal</label>
+                        <select id="lead-canal" name="canal">
+                            <option>Marketplace</option>
+                            <option>WhatsApp</option>
+                            <option>LinkedIn</option>
+                            <option>Instagram</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="lead-interes">Interes</label>
+                        <select id="lead-interes" name="interes">
+                            <option>Disenos y planos</option>
+                            <option>Software y apps</option>
+                            <option>Consultoria</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="lead-mensaje">Mensaje</label>
+                        <textarea id="lead-mensaje" name="mensaje" placeholder="Detalle del requerimiento"></textarea>
+                    </div>
+                    <button type="submit" class="btn primary">Enviar solicitud</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer public-footer">
+        CONSTRUCTORA WM/M&S · Contacto comercial en pantalla separada del catalogo y del acceso
+    </footer>
+
+    <div id="toast" class="toast"></div>
+    <script src="./app.js"></script>
+</body>
+</html>

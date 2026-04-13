@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registrar | CONSTRUCTORA WM/M&S</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="public-body">
+    <header class="public-topbar">
+        <div class="container topbar-inner">
+            <div class="topbar-brand">
+                <span class="eyebrow">Pantalla Cliente</span>
+                <h1>CONSTRUCTORA WM/M&S</h1>
+            </div>
+            <nav class="topbar-nav">
+                <a href="./catalogo.html">Catalogo</a>
+                <a href="./login.html#acceso-aprobado" class="is-current">Acceso cliente</a>
+                <a href="./login.html#registro-nuevo" class="is-current">Registro</a>
+                <a href="./contacto.html">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="public-main">
+        <section class="public-hero compact-hero">
+            <div class="container split-shell">
+                <section class="shell-section">
+                    <span class="mini-label">Pantalla de login unificado</span>
+                    <h2 class="page-title">Registrar</h2>
+                    <p class="page-copy">
+                        Esta pantalla unifica acceso cliente y registro. El cliente que ya fue aprobado por el administrador solo ingresa con su correo registrado; el cliente nuevo deja aqui sus datos para validacion y seguimiento.
+                    </p>
+                    <div class="access-note shell-card">
+                        <strong>Regla de acceso</strong>
+                        <p>Si tu correo ya fue aprobado, puedes entrar de inmediato. Si aun no existe aprobacion, registra tus datos y el administrador validara el acceso.</p>
+                    </div>
+                </section>
+
+                <section class="forms two-col-forms split-shell-forms">
+                    <form id="access-form" class="form-card shell-card" aria-labelledby="acceso-aprobado">
+                        <h3 id="acceso-aprobado">Acceso cliente</h3>
+                        <div class="field">
+                            <label for="access-email">Correo aprobado</label>
+                            <input id="access-email" name="email" type="email" placeholder="cliente@correo.com" required />
+                        </div>
+                        <button type="submit" class="btn primary">Ingresar</button>
+                        <button type="button" id="logout-btn" class="btn ghost">Salir</button>
+                        <p id="access-status" class="access-status">Modo publico: solo contenido abierto.</p>
+                    </form>
+
+                    <form id="register-form" class="form-card shell-card" aria-labelledby="registro-nuevo">
+                        <h3 id="registro-nuevo">Registrar cliente</h3>
+                        <div class="field">
+                            <label for="register-nombre">Nombre</label>
+                            <input id="register-nombre" name="nombre" required />
+                        </div>
+                        <div class="field">
+                            <label for="register-email">Email</label>
+                            <input id="register-email" name="email" type="email" required />
+                        </div>
+                        <div class="field">
+                            <label for="register-telefono">Telefono / WhatsApp</label>
+                            <input id="register-telefono" name="telefono" />
+                        </div>
+                        <div class="field">
+                            <label for="register-interes">Interes</label>
+                            <select id="register-interes" name="interes">
+                                <option>Disenos y planos</option>
+                                <option>Software y apps</option>
+                                <option>Consultoria</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn primary">Registrar mis datos</button>
+                    </form>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer public-footer">
+        CONSTRUCTORA WM/M&S · Acceso cliente y registro unificados en una sola pantalla
+    </footer>
+
+    <div id="toast" class="toast"></div>
+    <script src="./app.js"></script>
+</body>
+</html>

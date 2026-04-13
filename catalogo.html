@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catalogo | CONSTRUCTORA WM/M&S</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="public-body">
+    <header class="public-topbar">
+        <div class="container topbar-inner">
+            <div class="topbar-brand">
+                <span class="eyebrow">Pantalla Cliente</span>
+                <h1>CONSTRUCTORA WM/M&S</h1>
+            </div>
+            <nav class="topbar-nav">
+                <a href="./catalogo.html" class="is-current">Catalogo</a>
+                <a href="./login.html#acceso-aprobado">Acceso cliente</a>
+                <a href="./login.html#registro-nuevo">Registro</a>
+                <a href="./contacto.html">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="public-main">
+        <section class="public-hero compact-hero">
+            <div class="container split-shell split-shell-hero">
+                <div class="shell-section">
+                    <span class="mini-label">Vista cliente</span>
+                    <h2 class="page-title">Catalogo de productos y servicios</h2>
+                    <p class="page-copy">
+                        Revisa casas modelo, soluciones de software y presupuestos dinamicos. Desde aqui el cliente explora antes de registrar datos o pedir contacto comercial.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="btn primary" href="./login.html#registro-nuevo">Registrar para seguimiento</a>
+                        <a class="btn ghost" href="./contacto.html">Hablar con asesor</a>
+                    </div>
+                </div>
+                <aside class="catalog-sidebar shell-card page-sidebar">
+                    <div class="sidebar-block">
+                        <span class="mini-label">Lineas</span>
+                        <h3>Catalogo de precision</h3>
+                        <p>Visualiza productos publicos y activa premium cuando tu compra sea verificada.</p>
+                    </div>
+                    <div class="sidebar-block">
+                        <span class="mini-label">Categorias</span>
+                        <div class="category-stack">
+                            <button type="button" class="category-chip is-active">Residencial</button>
+                            <button type="button" class="category-chip">Software / ERP</button>
+                            <button type="button" class="category-chip">Consultoria</button>
+                        </div>
+                    </div>
+                    <div class="sidebar-block sidebar-calculator">
+                        <span class="mini-label">Presupuesto dinamico</span>
+                        <p>Los precios de materiales y mano de obra se calculan segun el area y los costos vigentes.</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="container page-stack">
+            <section class="shell-section">
+                <div class="section-headline">
+                    <div>
+                        <span class="mini-label">Explorar</span>
+                        <h2>Casas modelo, planos y apps</h2>
+                        <p>Selecciona un modelo para revisar dimensiones, cotizar y pasar a contacto o registro.</p>
+                    </div>
+                </div>
+                <div id="catalogo-grid" class="catalog-grid surgical-grid"></div>
+            </section>
+
+            <section class="shell-section dashboard-shell">
+                <div class="section-headline">
+                    <div>
+                        <span class="mini-label">Indicadores</span>
+                        <h2>Confianza comercial</h2>
+                    </div>
+                </div>
+                <div id="dashboard-grid" class="dashboard-grid"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="footer public-footer">
+        CONSTRUCTORA WM/M&S · Catalogo comercial separado de registro y contacto
+    </footer>
+
+    <div id="toast" class="toast"></div>
+    <script src="./app.js"></script>
+</body>
+</html>

@@ -29,6 +29,9 @@ const el = {
 };
 
 function showToast(message, isError = false) {
+  if (!el.toast) {
+    return;
+  }
   el.toast.textContent = message;
   el.toast.className = `toast ${isError ? 'error' : 'ok'}`;
   el.toast.style.opacity = '1';
@@ -49,6 +52,10 @@ function setClientSession(token, profile = null) {
 }
 
 function renderAccessStatus() {
+  if (!el.accessStatus) {
+    return;
+  }
+
   const profile = state.session.profile;
   if (!profile) {
     el.accessStatus.textContent = 'Modo publico: solo contenido abierto.';
@@ -133,6 +140,10 @@ function cardTemplate(diseno) {
 }
 
 function renderCatalogo() {
+  if (!el.catalogo) {
+    return;
+  }
+
   el.catalogo.innerHTML = state.disenos.map(cardTemplate).join('');
 
   document.querySelectorAll('.area-range').forEach((input) => {
@@ -192,16 +203,12 @@ function renderCatalogo() {
       if (!diseno) {
         return;
       }
-      const leadInteres = document.getElementById('lead-interes');
-      const leadMensaje = document.getElementById('lead-mensaje');
-      if (leadInteres && diseno.categoria) {
-        leadInteres.value = diseno.categoria;
-      }
-      if (leadMensaje) {
-        leadMensaje.value = `Solicito informacion detallada sobre ${diseno.nombre} (${diseno.id}).`;
-      }
-      el.leadForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      showToast('Producto cargado en solicitud comercial');
+      const params = new URLSearchParams({
+        disenoId: diseno.id,
+        interes: diseno.categoria || '',
+        mensaje: `Solicito informacion detallada sobre ${diseno.nombre} (${diseno.id}).`,
+      });
+      window.location.href = `./contacto.html?${params.toString()}`;
     });
   });
 }
@@ -232,11 +239,18 @@ async function cotizar(disenoId, areaM2) {
 }
 
 async function loadDisenos() {
+  if (!el.catalogo) {
+    return;
+  }
   state.disenos = await request('/api/disenos');
   renderCatalogo();
 }
 
 async function loadDashboard() {
+  if (!el.dashboard) {
+    return;
+  }
+
   const dashboard = await request('/api/dashboard');
   const channels = Object.entries(dashboard.porCanal || {})
     .map(([key, value]) => `<li><span>${key}</span><strong>${value}</strong></li>`)
@@ -280,82 +294,117 @@ async function refreshSessionFromToken() {
   }
 }
 
+function hydrateLeadFormFromQuery() {
+  if (!el.leadForm) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const interes = params.get('interes');
+  const mensaje = params.get('mensaje');
+  const disenoId = params.get('disenoId');
+  const leadInteres = document.getElementById('lead-interes');
+  const leadMensaje = document.getElementById('lead-mensaje');
+
+  if (leadInteres && interes) {
+    leadInteres.value = interes;
+  }
+
+  if (leadMensaje && mensaje) {
+    leadMensaje.value = mensaje;
+  }
+
+  if (disenoId) {
+    showToast(`Producto precargado para seguimiento: ${disenoId}`);
+  }
+}
+
 function bindForms() {
-  el.leadForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const formData = new FormData(el.leadForm);
-    try {
-      await request('/api/leads', {
-        method: 'POST',
-        body: JSON.stringify(Object.fromEntries(formData.entries())),
-      });
-      el.leadForm.reset();
-      await loadDashboard();
-      showToast('Lead registrado correctamente');
-    } catch (error) {
-      showToast(error.message, true);
-    }
-  });
+  if (el.leadForm) {
+    el.leadForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(el.leadForm);
+      try {
+        await request('/api/leads', {
+          method: 'POST',
+          body: JSON.stringify(Object.fromEntries(formData.entries())),
+        });
+        el.leadForm.reset();
+        await loadDashboard();
+        showToast('Lead registrado correctamente');
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    });
+  }
 
-  el.accessForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const formData = new FormData(el.accessForm);
-    const email = String(formData.get('email') || '').trim();
+  if (el.accessForm) {
+    el.accessForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(el.accessForm);
+      const email = String(formData.get('email') || '').trim();
 
-    try {
-      const login = await request('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email }),
-      });
-      setClientSession(login.token, {
-        email: login.cliente.email,
-        nivelAcceso: login.cliente.nivelAcceso,
-        comprasPagadas: login.cliente.comprasPagadas,
-      });
-      await loadDisenos();
-      showToast(`Sesion iniciada para ${login.cliente.email}`);
-    } catch (error) {
-      showToast(`${error.message}. Si aun no tienes cuenta, usa el registro rapido.`, true);
-    }
-  });
-
-  el.registerForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const formData = new FormData(el.registerForm);
-    const payload = Object.fromEntries(formData.entries());
-
-    try {
-      const registro = await request('/api/auth/registro', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-
-      if (registro.token && registro.cliente) {
-        setClientSession(registro.token, {
-          email: registro.cliente.email,
-          nivelAcceso: registro.cliente.nivelAcceso,
-          comprasPagadas: registro.cliente.comprasPagadas,
+      try {
+        const login = await request('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+        });
+        setClientSession(login.token, {
+          email: login.cliente.email,
+          nivelAcceso: login.cliente.nivelAcceso,
+          comprasPagadas: login.cliente.comprasPagadas,
         });
         await loadDisenos();
-        showToast('Cliente existente detectado. Sesion iniciada automaticamente.');
-        return;
+        showToast(`Sesion iniciada para ${login.cliente.email}`);
+      } catch (error) {
+        showToast(`${error.message}. Si aun no tienes cuenta, usa el registro rapido.`, true);
       }
+    });
+  }
 
-      const accessEmail = document.getElementById('access-email');
-      accessEmail.value = payload.email || '';
-      el.registerForm.reset();
-      await loadDashboard();
-      showToast(registro.mensaje || 'Registro guardado. Puedes continuar con productos publicos.');
-    } catch (error) {
-      showToast(error.message, true);
-    }
-  });
+  if (el.registerForm) {
+    el.registerForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(el.registerForm);
+      const payload = Object.fromEntries(formData.entries());
 
-  el.logoutBtn.addEventListener('click', async () => {
-    setClientSession('', null);
-    await loadDisenos();
-    showToast('Sesion cerrada. Modo publico activo.');
-  });
+      try {
+        const registro = await request('/api/auth/registro', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+
+        if (registro.token && registro.cliente) {
+          setClientSession(registro.token, {
+            email: registro.cliente.email,
+            nivelAcceso: registro.cliente.nivelAcceso,
+            comprasPagadas: registro.cliente.comprasPagadas,
+          });
+          await loadDisenos();
+          showToast('Cliente existente detectado. Sesion iniciada automaticamente.');
+          return;
+        }
+
+        const accessEmail = document.getElementById('access-email');
+        if (accessEmail) {
+          accessEmail.value = payload.email || '';
+        }
+        el.registerForm.reset();
+        await loadDashboard();
+        showToast(registro.mensaje || 'Registro guardado. Puedes continuar con productos publicos.');
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    });
+  }
+
+  if (el.logoutBtn) {
+    el.logoutBtn.addEventListener('click', async () => {
+      setClientSession('', null);
+      await loadDisenos();
+      showToast('Sesion cerrada. Modo publico activo.');
+    });
+  }
 }
 
 async function bootstrap() {
@@ -363,6 +412,7 @@ async function bootstrap() {
     await request('/api/health');
     await refreshSessionFromToken();
     await Promise.all([loadDisenos(), loadDashboard()]);
+    hydrateLeadFormFromQuery();
     bindForms();
     showToast('Sistema listo: CONSTRUCTORA WM/M&S');
   } catch (error) {
