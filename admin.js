@@ -110,11 +110,12 @@ function renderVentas(ventas) {
       (v) => `
       <div class="form-card">
         <h3>${v.id} · ${v.clienteNombre || ''}</h3>
-        <p>${v.clienteEmail || ''} · ${v.disenoId} · ${v.estadoPago}</p>
+        <p>${v.clienteEmail || ''} · ${v.disenoId} · ${v.estadoPago} · Acceso: ${v.accesoApp ? 'activo' : 'inactivo'}</p>
         <div class="inline-form">
           <button class="btn primary" data-pay="${v.id}" type="button">Pago verificado</button>
           <button class="btn ghost" data-regen="${v.id}" type="button">Regenerar acceso</button>
           <button class="btn" data-resend="${v.id}" type="button">Reenviar credenciales</button>
+            <button class="btn danger" data-revoke="${v.id}" type="button">Revocar acceso</button>
         </div>
       </div>
     `
@@ -164,6 +165,20 @@ function renderVentas(ventas) {
       }
     });
   });
+
+  document.querySelectorAll('[data-revoke]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-revoke');
+      if (!confirm(`¿Revocar acceso de ${id}? Esto invalida todos sus tokens activos al instante.`)) return;
+      try {
+        const result = await adminRequest(`/api/integracion/appsheet/ventas/${id}/revocar-acceso`, { method: 'PATCH' });
+        showToast(`Acceso revocado. Tokens invalidados: ${result.tokensRevocados}`);
+        await loadVentas();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    });
+  });
 }
 
 function parseItemsJson(value) {
@@ -179,21 +194,31 @@ function parseItemsJson(value) {
 }
 
 function renderKpis(resumen = {}) {
+  const canalItems =
+    Object.entries(resumen.ventasPorCanal || {})
+      .map(([canal, cant]) => `${canal}: ${cant}`)
+      .join(' · ') || '—';
+
   const cards = [
-    { label: 'Ventas pagadas', value: resumen.ventasPagadas ?? 0 },
-    { label: 'Ingresos pagados', value: `Q${Number(resumen.ingresosPagados || 0).toFixed(2)}` },
-    { label: 'Utilidad neta', value: `Q${Number(resumen.utilidadNetaTotal || 0).toFixed(2)}` },
-    { label: 'Margen promedio', value: `${Number(resumen.margenPromedioPorcentaje || 0).toFixed(2)}%` },
-    { label: 'Consultas registradas', value: resumen.consultasRegistradas ?? 0 },
-    { label: 'Envios credenciales', value: resumen.enviosCredenciales ?? 0 },
-    { label: 'Reenvios credenciales', value: resumen.reenviosCredenciales ?? 0 },
-    { label: 'Envios SMTP reales', value: resumen.enviosCredencialesReales ?? 0 },
+    { label: 'Ventas pagadas',       value: resumen.ventasPagadas ?? 0 },
+    { label: 'Ventas pendientes',    value: resumen.ventasPendientes ?? 0 },
+    { label: 'Ingresos pagados',     value: `Q${Number(resumen.ingresosPagados || 0).toFixed(2)}` },
+    { label: 'Pipeline (pendiente)', value: `Q${Number(resumen.montoPipeline || 0).toFixed(2)}` },
+    { label: 'Utilidad neta',        value: `Q${Number(resumen.utilidadNetaTotal || 0).toFixed(2)}` },
+    { label: 'Margen promedio',      value: `${Number(resumen.margenPromedioPorcentaje || 0).toFixed(2)}%` },
+    { label: 'Tasa conversion',      value: `${Number(resumen.tasaConversion || 0).toFixed(1)}%` },
+    { label: 'Ticket promedio',      value: `Q${Number(resumen.ticketPromedio || 0).toFixed(2)}` },
+    { label: 'Consultas registradas',value: resumen.consultasRegistradas ?? 0 },
+    { label: 'Envios credenciales',  value: resumen.enviosCredenciales ?? 0 },
+    { label: 'Reenvios credenciales',value: resumen.reenviosCredenciales ?? 0 },
+    { label: 'Envios SMTP reales',   value: resumen.enviosCredencialesReales ?? 0 },
+    { label: 'Ventas por canal',     value: canalItems, span2: true },
   ];
 
   el.kpis.innerHTML = cards
     .map(
       (card) => `
-      <article class="metric">
+      <article class="metric${card.span2 ? ' span-2' : ''}">
         <h4>${card.label}</h4>
         <p>${card.value}</p>
       </article>

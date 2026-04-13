@@ -1,6 +1,20 @@
 [
   {
     "id": "PAQ-START",
+      {
+        "id": "PAQ-BASICO",
+        "nombre": "Kit Basico Constructor",
+        "descripcion": "Solo plano arquitectonico. La entrada a la Escalera de Valor de CONSTRUCTORA WM/M&S. Sin app, sin bundle.",
+        "items": [
+          { "disenoId": "DIS-001", "cantidad": 1 }
+        ],
+        "descuentoPct": 0,
+        "activo": true,
+        "estrategia": "entry",
+        "actualizadoEn": "2026-04-12T00:00:00.000Z"
+      },
+      {
+        "id": "PAQ-START",
     "nombre": "Paquete Constructor Start",
     "descripcion": "Plano base + ERP para iniciar operaciones comerciales.",
     "items": [

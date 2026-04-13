@@ -2461,6 +2461,55 @@ CONSTRUCTORA WM/M&S
     return true;
   }
 
+  if (
+    req.method === 'PATCH' &&
+    pathname.startsWith('/api/integracion/appsheet/ventas/') &&
+    pathname.endsWith('/revocar-acceso')
+  ) {
+    checkIntegrationKey(req);
+    const parts = pathname.split('/').filter(Boolean);
+    const ventaId = parts[4];
+    if (!ventaId) {
+      throw new ApiError(400, 'ventaId requerido');
+    }
+
+    const ventas = await readCollection('ventas', []);
+    const venta = ventas.find((item) => item.id === ventaId);
+    if (!venta) {
+      throw new ApiError(404, 'Venta no encontrada');
+    }
+
+    venta.accesoApp = false;
+    venta.enlaceEntrega = '';
+    venta.accesoRevocadoEn = new Date().toISOString();
+
+    // Invalidar todos los tokens activos de esta venta (Kill-Switch)
+    const accesos = await readCollection('accesos', []);
+    let tokensRevocados = 0;
+    accesos.forEach((acc) => {
+      if (acc.ventaId === ventaId && !acc.usado) {
+        acc.usado = true;
+        acc.revocadoEn = new Date().toISOString();
+        tokensRevocados++;
+      }
+    });
+
+    await Promise.all([
+      writeCollection('ventas', ventas),
+      writeCollection('accesos', accesos),
+    ]);
+
+    sendJson(res, 200, {
+      ok: true,
+      ventaId,
+      accesoApp: false,
+      enlaceEntrega: '',
+      tokensRevocados,
+      revocadoEn: venta.accesoRevocadoEn,
+    });
+    return true;
+  }
+
   if (req.method === 'GET' && pathname === '/api/integracion/appsheet/historial-credenciales') {
     checkIntegrationKey(req);
     sendJson(res, 200, await getCredencialesHistorialRows(query));
