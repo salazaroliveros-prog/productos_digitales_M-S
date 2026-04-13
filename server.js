@@ -10,6 +10,7 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3007;
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
+const DELIVERABLES_DIR = path.join(ROOT, 'deliverables');
 const AUTH_SECRET = process.env.AUTH_SECRET || 'wmms-local-secret';
 const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || 'wmms-admin').trim().toLowerCase();
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || '');
@@ -47,6 +48,12 @@ const MIME_TYPES = {
   '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.csv': 'text/csv; charset=utf-8',
+  '.pdf': 'application/pdf',
+  '.zip': 'application/zip',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -196,6 +203,61 @@ function sanitizeMongoDoc(doc) {
   const copy = { ...doc };
   delete copy._id;
   return copy;
+}
+
+function ensureDeliverablesDirectory() {
+  if (!fs.existsSync(DELIVERABLES_DIR)) {
+    fs.mkdirSync(DELIVERABLES_DIR, { recursive: true });
+  }
+}
+
+function generateDeliverableToken(ventaId, archivo) {
+  const payload = {
+    ventaId,
+    archivo,
+    timestamp: Date.now(),
+    ttl: ACCESS_TOKEN_TTL_MINUTES * 60 * 1000,
+  };
+  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64');
+  const signature = tokenHash(encoded);
+  return `${encoded}.${signature}`;
+}
+
+function verifyDeliverableToken(token, ventaId) {
+  if (!token || !token.includes('.')) return null;
+  const [encoded, signature] = token.split('.');
+  const expectedSignature = tokenHash(encoded);
+  if (!safeCompareString(signature, expectedSignature)) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(encoded, 'base64').toString());
+    const now = Date.now();
+    if (now > payload.timestamp + payload.ttl) return null; // Token expired
+    if (ventaId && payload.ventaId !== ventaId) return null; // Venta mismatch
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function mimeTypeForFile(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  return MIME_TYPES[ext] || 'application/octet-stream';
+}
+
+function getAllDeliverableFiles(ventaId) {
+  ensureDeliverablesDirectory();
+  if (!fs.existsSync(DELIVERABLES_DIR)) return [];
+
+  return fs
+    .readdirSync(DELIVERABLES_DIR)
+    .filter((file) => file.startsWith(`${ventaId}_`))
+    .map((file) => ({
+      archivo: file,
+      ruta: path.join(DELIVERABLES_DIR, file),
+      nombre: file.replace(`${ventaId}_`, ''),
+      tamanio: fs.statSync(path.join(DELIVERABLES_DIR, file)).size,
+    }));
 }
 
 async function ensureMongoConnection() {
@@ -1427,6 +1489,90 @@ async function routeApi(req, res, url) {
     return true;
   }
 
+  if (req.method === 'POST' && pathname === '/api/archivos/subir') {
+    // Upload a deliverable file for a sale
+    // Requires integration key
+    // Body formData: ventaId, archivo (file)
+    checkIntegrationKey(req);
+    ensureDeliverablesDirectory();
+
+    const body = await parseBody(req);
+    const ventaId = String(body.ventaId || '').trim();
+    if (!ventaId) {
+      throw new ApiError(400, 'ventaId requerido');
+    }
+
+    // For proper file upload handling, this would need multipart/form-data parsing
+    // For now, return a template showing how to integrate
+    sendJson(res, 200, {
+      message: 'File upload endpoint ready',
+      structure: {
+        endpoint: '/api/archivos/subir',
+        method: 'POST',
+        contentType: 'multipart/form-data',
+        fields: [
+          { name: 'ventaId', type: 'string', required: true },
+          { name: 'archivo', type: 'file', required: true, accept: '.pdf,.zip,.doc,.docx,.xls,.xlsx' },
+        ],
+      },
+      note: 'Install "busboy" package and implement multipart parsing for production file uploads',
+    });
+    return true;
+  }
+
+  if (req.method === 'GET' && pathname.startsWith('/api/archivos/descargar/')) {
+    // Download a deliverable file with token protection
+    // URL: /api/archivos/descargar/:ventaId/:archivo?token=...
+    const parts = pathname.replace('/api/archivos/descargar/', '').split('/');
+    const ventaId = parts[0];
+    const archivo = parts[1];
+    const token = query.get('token') || '';
+
+    if (!ventaId || !archivo) {
+      throw new ApiError(400, 'Ruta invalida. Use: /api/archivos/descargar/:ventaId/:archivo?token=...');
+    }
+
+    // Verify token
+    const payload = verifyDeliverableToken(token, ventaId);
+    if (!payload || payload.archivo !== archivo) {
+      throw new ApiError(401, 'Token de descarga invalido o expirado');
+    }
+
+    // Verify venta is paid
+    const ventas = await readCollection('ventas', []);
+    const venta = ventas.find((v) => v.id === ventaId);
+    if (!venta || normalizePagoStatus(venta.estadoPago) !== 'pagado') {
+      throw new ApiError(403, 'Acceso denegado. Venta no pagada o no existe.');
+    }
+
+    const rutaArchivo = path.join(DELIVERABLES_DIR, `${ventaId}_${archivo}`);
+    if (!fs.existsSync(rutaArchivo)) {
+      throw new ApiError(404, 'Archivo no encontrado');
+    }
+
+    // Log download access
+    const accesos = await readCollection('accesos', []);
+    accesos.push({
+      ventaId,
+      archivo,
+      fecha: new Date().toISOString(),
+      tipo: 'descarga',
+      email: venta.clienteEmail || '',
+    });
+    await writeCollection('accesos', accesos);
+
+    const contentType = mimeTypeForFile(rutaArchivo);
+    const stats = fs.statSync(rutaArchivo);
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Content-Length': stats.size,
+      'Content-Disposition': `attachment; filename="${archivo}"`,
+      'Cache-Control': 'no-cache, no-store',
+    });
+    fs.createReadStream(rutaArchivo).pipe(res);
+    return true;
+  }
+
   if (req.method === 'GET' && pathname === '/api/entrega/validar') {
     const token = query.get('token') || '';
     const { registro } = await resolveAccessToken(token);
@@ -2388,6 +2534,7 @@ const bootstrapPromise = bootstrapPersistence().catch(() => {
 
 if (require.main === module) {
   bootstrapPromise.finally(() => {
+    ensureDeliverablesDirectory();
     server.listen(PORT, () => {
       console.log(
         `CONSTRUCTORA WM/M&S app running on http://localhost:${PORT} (persistence=${runtimeProvider})`
